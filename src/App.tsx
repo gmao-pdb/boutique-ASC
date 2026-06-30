@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
 import Login from "./pages/Login";
+import Joueurs from "./pages/Joueurs";
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -46,7 +47,7 @@ function Root() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<Placeholder titre="Joueurs" />} />
+          <Route index element={<Joueurs />} />
           <Route path="cheques" element={<Placeholder titre="Chèques / dépôts" />} />
           <Route path="stock" element={<Placeholder titre="Stock & approvisionnement" />} />
           <Route path="parametres" element={<Placeholder titre="Paramètres" />} />

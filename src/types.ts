@@ -71,6 +71,19 @@ export interface Config {
   gabarits: Gabarit[];
 }
 
+// Pré-inscription déposée par la personne via le QR (formulaire public)
+export interface Preinscription {
+  id: string;
+  nom: string;
+  prenom: string;
+  annee: string; // date de naissance (ISO)
+  tel: string;
+  gardien: boolean;
+  categorie: string;
+  articles: { article: string; taille: string }[];
+  createdAt?: number;
+}
+
 // Stock : une entrée par article + taille
 export interface StockItem {
   id: string; // `${article}__${taille}`

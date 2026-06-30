@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useConfig, useJoueurs, deleteJoueur } from "../data";
+import { useConfig, useJoueurs, deleteJoueur, usePreinscriptions } from "../data";
 import { calc, euro } from "../calc";
 import type { Joueur } from "../types";
 
@@ -14,6 +14,7 @@ const PAY_FILTERS = [
 export default function Joueurs() {
   const config = useConfig();
   const joueurs = useJoueurs();
+  const preinsc = usePreinscriptions();
   const nav = useNavigate();
   const [q, setQ] = useState("");
   const [selCats, setSelCats] = useState<Set<string>>(new Set());
@@ -50,6 +51,11 @@ export default function Joueurs() {
 
   return (
     <>
+      {preinsc && preinsc.length > 0 && (
+        <button className="preinsc-banner" onClick={() => nav("/preinscriptions")}>
+          📥 {preinsc.length} pré-inscription{preinsc.length > 1 ? "s" : ""} à valider →
+        </button>
+      )}
       <button className="btn-primary" style={{ marginBottom: 14 }} onClick={() => nav("/joueur/new")}>+ Nouveau joueur</button>
 
       <div className="totaux">

@@ -6,6 +6,8 @@ import FicheJoueur from "./pages/FicheJoueur";
 import Cheques from "./pages/Cheques";
 import Stock from "./pages/Stock";
 import Parametres from "./pages/Parametres";
+import Inscription from "./pages/Inscription";
+import Preinscriptions from "./pages/Preinscriptions";
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -34,29 +36,33 @@ function Layout() {
   );
 }
 
-function Root() {
+function AuthedApp() {
   const { user, loading } = useAuth();
   if (loading) return <div className="full-center muted">Chargement…</div>;
   if (!user) return <Login />;
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Joueurs />} />
-          <Route path="joueur/:id" element={<FicheJoueur />} />
-          <Route path="cheques" element={<Cheques />} />
-          <Route path="stock" element={<Stock />} />
-          <Route path="parametres" element={<Parametres />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Joueurs />} />
+        <Route path="joueur/:id" element={<FicheJoueur />} />
+        <Route path="preinscriptions" element={<Preinscriptions />} />
+        <Route path="cheques" element={<Cheques />} />
+        <Route path="stock" element={<Stock />} />
+        <Route path="parametres" element={<Parametres />} />
+      </Route>
+    </Routes>
   );
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <Root />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/inscription" element={<Inscription />} />
+          <Route path="/*" element={<AuthedApp />} />
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

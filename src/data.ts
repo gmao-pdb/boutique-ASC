@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { DEFAULT_CONFIG } from "./defaultConfig";
-import type { Config, Joueur, StockItem } from "./types";
+import type { Config, Joueur, StockItem, Preinscription } from "./types";
 
 const configRef = doc(db, "config", "main");
 
@@ -66,4 +66,21 @@ export async function setStockItem(article: string, taille: string, patch: Parti
 }
 export async function enregistrerInventaire(lignes: { article: string; taille: string; quantite: number }[]) {
   await addDoc(collection(db, "inventaires"), { date: new Date().toISOString(), lignes });
+}
+
+/* ---------- Pré-inscriptions (formulaire public via QR) ---------- */
+export function usePreinscriptions(): Preinscription[] | null {
+  const [list, setList] = useState<Preinscription[] | null>(null);
+  useEffect(() => {
+    return onSnapshot(collection(db, "preinscriptions"), (snap) => {
+      setList(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Preinscription, "id">) })));
+    });
+  }, []);
+  return list;
+}
+export async function addPreinscription(p: Omit<Preinscription, "id">) {
+  return addDoc(collection(db, "preinscriptions"), { ...p, createdAt: Date.now() });
+}
+export async function deletePreinscription(id: string) {
+  await deleteDoc(doc(db, "preinscriptions", id));
 }

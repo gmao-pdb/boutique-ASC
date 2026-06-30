@@ -15,6 +15,13 @@ export function useConfig(): Config | null {
         // complète les champs ajoutés après coup (config déjà en base)
         if (!c.systemes || !c.systemes.length) c.systemes = DEFAULT_CONFIG.systemes;
         if (!c.gabarits || !c.gabarits.length) c.gabarits = DEFAULT_CONFIG.gabarits;
+        // assure la présence du mode "2 CHEQUES" (ajouté après coup)
+        if (c.reglements && !c.reglements.includes("2 CHEQUES")) {
+          const i = c.reglements.indexOf("1 CHEQUE");
+          c.reglements = i >= 0
+            ? [...c.reglements.slice(0, i + 1), "2 CHEQUES", ...c.reglements.slice(i + 1)]
+            : [...c.reglements, "2 CHEQUES"];
+        }
         setConfig(c);
       } else void setDoc(configRef, DEFAULT_CONFIG); // 1ère fois : on sème la config par défaut
     });

@@ -1,0 +1,56 @@
+:root {
+  --vert: #1b7a3d;
+  --vert-fonce: #0f5128;
+  --noir: #1c1c1c;
+  --rouge: #c62828;
+  --bg: #f3f5f3;
+  --card: #ffffff;
+  --bord: #dbe2db;
+  --txt: #1c2520;
+  --muted: #6b7a70;
+  --orange: #b26a00;
+  font-family: "Segoe UI", system-ui, Arial, sans-serif;
+  color: var(--txt);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--bg); font-size: 15px; -webkit-text-size-adjust: 100%; }
+
+button { font-family: inherit; cursor: pointer; }
+
+/* App shell mobile-first */
+.app-shell { display: flex; flex-direction: column; min-height: 100dvh; }
+.app-header {
+  background: linear-gradient(135deg, var(--vert-fonce), var(--vert));
+  color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 10;
+}
+.app-header .logo {
+  width: 38px; height: 38px; border-radius: 50%; background: #fff; color: var(--vert-fonce);
+  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;
+  border: 3px solid var(--rouge); flex-shrink: 0;
+}
+.app-header h1 { font-size: 16px; margin: 0; font-weight: 700; }
+.app-header .sub { font-size: 11px; opacity: .9; }
+
+.app-main { flex: 1; padding: 16px; max-width: 900px; width: 100%; margin: 0 auto; }
+
+/* Barre d'onglets en bas (navigation mobile au pouce) */
+.tabbar {
+  display: flex; background: var(--card); border-top: 1px solid var(--bord);
+  position: sticky; bottom: 0; z-index: 10;
+}
+.tabbar a {
+  flex: 1; text-align: center; padding: 9px 4px 8px; text-decoration: none;
+  color: var(--muted); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; gap: 2px;
+}
+.tabbar a .ico { font-size: 19px; }
+.tabbar a.active { color: var(--vert-fonce); }
+
+.card {
+  background: var(--card); border: 1px solid var(--bord); border-radius: 12px;
+  padding: 14px; margin-bottom: 10px;
+}
+.muted { color: var(--muted); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }

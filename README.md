@@ -23,9 +23,11 @@ npm run dev
 - [x] P0 — squelette (shell, navigation, connexion Firebase câblée)
 - [x] P1 — authentification (login e-mail/mdp) + règles Firestore + modèle de données
 - [ ] P2 — liste joueurs
-- [ ] P3 — fiche joueur (packs, catégories FFF, gardien, sac)
-- [ ] P4 — chèques / dépôts
-- [ ] P5 — paramètres
-- [ ] P5-bis — stock & approvisionnement (inventaires, seuils mini, manquants)
-- [ ] P6 — import des données existantes
-- [ ] P7 — PWA + finitions mobile
+- [x] P3 — fiche joueur (packs, catégories FFF, gardien, sac)
+- [x] P4 — chèques / dépôts
+- [x] P5 — paramètres
+- [x] P5-bis — stock & approvisionnement (inventaires, seuils mini, manquants)
+- [x] P6 — import des données existantes
+- [x] P7 — PWA + finitions mobile
+
+➡️ Reste à faire : déploiement Cloudflare Pages (dépôt GitHub + variables d'env).

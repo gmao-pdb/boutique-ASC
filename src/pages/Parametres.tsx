@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useConfig, saveConfig } from "../data";
-import type { Config } from "../types";
+import { useConfig, saveConfig, addJoueur } from "../data";
+import type { ArticleStatut, Config, Joueur } from "../types";
 
 const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
 const parsePacks = (s: string) => {
@@ -17,10 +17,42 @@ const parsePacks = (s: string) => {
 const packsToText = (cfg: Config, p: Record<string, string[]>) =>
   cfg.categories.map((c) => c + " = " + ((p && p[c]) || []).join(", ")).join("\n");
 
+// Conversion ancienne catégorie gardien -> catégorie de champ
+function champCat(cat: string, categories: string[]): string {
+  if (/SENIOR/i.test(cat)) return categories.find((c) => /SENIOR/i.test(c)) || cat;
+  if (/FEMININ/i.test(cat)) return categories.find((c) => /FEMININ/i.test(c)) || cat;
+  const nums = [...cat.matchAll(/U\s*(\d+)/gi)].map((m) => +m[1]);
+  if (nums.length) {
+    const mx = Math.max(...nums);
+    const cand = categories.map((c) => { const n = [...c.matchAll(/U\s*(\d+)/gi)].map((m) => +m[1]); return { name: c, max: n.length ? Math.max(...n) : null }; }).filter((x) => x.max != null) as { name: string; max: number }[];
+    const up = cand.filter((x) => x.max >= mx).sort((a, b) => a.max - b.max)[0];
+    if (up) return up.name;
+  }
+  return categories[0] || cat;
+}
+
+interface VieuxJoueur { categorie?: string; gardien?: boolean; licence?: string; nom?: string; prenom?: string; annee?: string; tel?: string; articles?: { article: string; taille?: string; statut?: string; motif?: string }[]; remises?: string[]; reglement?: string; cheques?: { montant?: number; datePrev?: string; date?: string; recup?: boolean; pris?: boolean; enc?: boolean }[]; regOk?: boolean; regDate?: string; commentaires?: string; }
+
+function mapJoueur(o: VieuxJoueur, categories: string[]): Omit<Joueur, "id"> {
+  let categorie = o.categorie || "";
+  let gardien = !!o.gardien;
+  if (/GARDIEN/i.test(categorie)) { gardien = true; categorie = champCat(categorie, categories); }
+  return {
+    categorie, gardien, licence: (o.licence as Joueur["licence"]) || "",
+    nom: o.nom || "", prenom: o.prenom || "", annee: o.annee || "", tel: o.tel || "",
+    articles: (o.articles || []).map((a) => ({ article: a.article, taille: a.taille || "", statut: (a.statut === "differe" ? "acommander" : a.statut || "remis") as ArticleStatut, motif: a.motif || "" })),
+    remises: o.remises || [],
+    reglement: o.reglement || "",
+    cheques: (o.cheques || []).map((ch) => ({ montant: ch.montant, datePrev: ch.datePrev || ch.date || "", recup: !!(ch.recup ?? ch.pris), enc: !!ch.enc })),
+    regOk: !!o.regOk, regDate: o.regDate || "", commentaires: o.commentaires || "",
+  };
+}
+
 export default function Parametres() {
   const cfg = useConfig();
   const [draft, setDraft] = useState<Config | null>(null);
   const [txt, setTxt] = useState<Record<string, string>>({});
+  const [importMsg, setImportMsg] = useState("");
 
   if (cfg && draft === null) {
     setDraft(JSON.parse(JSON.stringify(cfg)));
@@ -49,6 +81,19 @@ export default function Parametres() {
     };
     await saveConfig(next);
     alert("Paramètres enregistrés ✔");
+  };
+
+  const importer = async (file: File) => {
+    try {
+      const o = JSON.parse(await file.text()) as { data?: VieuxJoueur[] };
+      if (!Array.isArray(o.data)) { setImportMsg("Fichier invalide (pas de 'data')."); return; }
+      if (!confirm("Importer " + o.data.length + " joueur(s) ? Ils s'ajoutent aux joueurs existants.")) return;
+      let n = 0;
+      for (const vj of o.data) { await addJoueur(mapJoueur(vj, cfg!.categories)); n++; }
+      setImportMsg("✔ " + n + " joueur(s) importé(s).");
+    } catch {
+      setImportMsg("Erreur de lecture du fichier.");
+    }
   };
 
   return (
@@ -84,6 +129,11 @@ export default function Parametres() {
       <textarea rows={8} value={txt.packsGardien} onChange={(e) => setT("packsGardien", e.target.value)} />
 
       <button className="btn-primary" onClick={() => void enregistrer()}>💾 Enregistrer les paramètres</button>
+
+      <h3 className="sec">Importer l'ancienne appli</h3>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Charge le fichier de sauvegarde <code>.json</code> de l'ancienne appli HTML. Les joueurs sont ajoutés (anciens gardiens et statuts convertis automatiquement).</p>
+      <input type="file" accept=".json" onChange={(e) => { const f = e.target.files?.[0]; if (f) void importer(f); e.target.value = ""; }} />
+      {importMsg && <div className="hint vert" style={{ marginTop: 8 }}>{importMsg}</div>}
     </div>
   );
 }

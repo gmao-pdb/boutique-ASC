@@ -164,7 +164,20 @@ input, select, textarea {
 .manq { background: var(--card); border: 1px solid var(--bord); border-radius: 10px; padding: 9px 12px; margin-bottom: 7px; }
 .stock-cat { background: var(--card); border: 1px solid var(--bord); border-radius: 10px; margin-bottom: 8px; padding: 4px 10px; }
 .stock-cat summary { font-weight: 700; padding: 8px 4px; cursor: pointer; }
-.stock-row { display: grid; grid-template-columns: 1fr auto 64px auto 64px auto; gap: 6px; align-items: center; padding: 6px 0; border-top: 1px solid var(--bord); }
+.stock-row { display: grid; grid-template-columns: 1fr auto 58px auto 58px auto auto; gap: 5px; align-items: center; padding: 6px 0; border-top: 1px solid var(--bord); }
 .stock-row .st-t { font-size: 13px; }
 .stock-row .st-lab { font-size: 11px; color: var(--muted); margin: 0; }
-.stock-row input { width: 64px; padding: 6px; font-size: 14px; text-align: right; }
+.stock-row input { width: 58px; padding: 6px; font-size: 14px; text-align: right; }
+.x { background: none; border: none; color: var(--muted); font-size: 15px; padding: 2px 4px; }
+.addrow { display: flex; gap: 6px; align-items: center; padding: 8px 0 4px; }
+.addrow input { flex: 1; }
+
+/* Composition des packs */
+.pktable { border: 1px solid var(--bord); border-radius: 10px; overflow: hidden; margin-top: 8px; }
+.pkhead, .pkrow { display: grid; grid-template-columns: 1fr 70px 70px; align-items: center; }
+.pkhead { background: var(--noir); color: #fff; font-size: 11px; text-transform: uppercase; font-weight: 700; }
+.pkhead span { padding: 8px; text-align: center; }
+.pkhead span:first-child { text-align: left; }
+.pkrow { border-top: 1px solid var(--bord); }
+.pkrow .pkname { padding: 9px 10px; font-size: 14px; }
+.pkrow input { width: 20px; height: 20px; justify-self: center; }

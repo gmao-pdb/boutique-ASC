@@ -1,58 +1,14 @@
 import { useState } from "react";
-import { useConfig, saveConfig, addJoueur } from "../data";
-import type { ArticleStatut, Config, Joueur } from "../types";
+import { useConfig, patchConfig } from "../data";
+import type { Config } from "../types";
 
 const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
-const parsePacks = (s: string) => {
-  const o: Record<string, string[]> = {};
-  lines(s).forEach((l) => {
-    const i = l.indexOf("=");
-    if (i < 0) return;
-    const cat = l.slice(0, i).trim();
-    const arr = l.slice(i + 1).split(",").map((x) => x.trim()).filter(Boolean);
-    if (cat && arr.length) o[cat] = arr;
-  });
-  return o;
-};
-const packsToText = (cfg: Config, p: Record<string, string[]>) =>
-  cfg.categories.map((c) => c + " = " + ((p && p[c]) || []).join(", ")).join("\n");
-
-// Conversion ancienne catégorie gardien -> catégorie de champ
-function champCat(cat: string, categories: string[]): string {
-  if (/SENIOR/i.test(cat)) return categories.find((c) => /SENIOR/i.test(c)) || cat;
-  if (/FEMININ/i.test(cat)) return categories.find((c) => /FEMININ/i.test(c)) || cat;
-  const nums = [...cat.matchAll(/U\s*(\d+)/gi)].map((m) => +m[1]);
-  if (nums.length) {
-    const mx = Math.max(...nums);
-    const cand = categories.map((c) => { const n = [...c.matchAll(/U\s*(\d+)/gi)].map((m) => +m[1]); return { name: c, max: n.length ? Math.max(...n) : null }; }).filter((x) => x.max != null) as { name: string; max: number }[];
-    const up = cand.filter((x) => x.max >= mx).sort((a, b) => a.max - b.max)[0];
-    if (up) return up.name;
-  }
-  return categories[0] || cat;
-}
-
-interface VieuxJoueur { categorie?: string; gardien?: boolean; licence?: string; nom?: string; prenom?: string; annee?: string; tel?: string; articles?: { article: string; taille?: string; statut?: string; motif?: string }[]; remises?: string[]; reglement?: string; cheques?: { montant?: number; datePrev?: string; date?: string; recup?: boolean; pris?: boolean; enc?: boolean }[]; regOk?: boolean; regDate?: string; commentaires?: string; }
-
-function mapJoueur(o: VieuxJoueur, categories: string[]): Omit<Joueur, "id"> {
-  let categorie = o.categorie || "";
-  let gardien = !!o.gardien;
-  if (/GARDIEN/i.test(categorie)) { gardien = true; categorie = champCat(categorie, categories); }
-  return {
-    categorie, gardien, licence: (o.licence as Joueur["licence"]) || "",
-    nom: o.nom || "", prenom: o.prenom || "", annee: o.annee || "", tel: o.tel || "",
-    articles: (o.articles || []).map((a) => ({ article: a.article, taille: a.taille || "", statut: (a.statut === "differe" ? "acommander" : a.statut || "remis") as ArticleStatut, motif: a.motif || "" })),
-    remises: o.remises || [],
-    reglement: o.reglement || "",
-    cheques: (o.cheques || []).map((ch) => ({ montant: ch.montant, datePrev: ch.datePrev || ch.date || "", recup: !!(ch.recup ?? ch.pris), enc: !!ch.enc })),
-    regOk: !!o.regOk, regDate: o.regDate || "", commentaires: o.commentaires || "",
-  };
-}
 
 export default function Parametres() {
   const cfg = useConfig();
   const [draft, setDraft] = useState<Config | null>(null);
   const [txt, setTxt] = useState<Record<string, string>>({});
-  const [importMsg, setImportMsg] = useState("");
+  const [packCat, setPackCat] = useState("");
 
   if (cfg && draft === null) {
     setDraft(JSON.parse(JSON.stringify(cfg)));
@@ -60,40 +16,35 @@ export default function Parametres() {
       remises: cfg.remises.map((r) => r.nom + " = " + r.montant).join("\n"),
       categories: cfg.categories.join("\n"),
       reglements: cfg.reglements.join("\n"),
-      catalogue: cfg.catalogue.map((c) => c.nom + " = " + c.tailles.join(", ")).join("\n"),
-      packs: packsToText(cfg, cfg.packs),
-      packsGardien: packsToText(cfg, cfg.packsGardien),
     });
+    setPackCat(cfg.categories[0] || "");
   }
   if (!cfg || !draft) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
   const setT = (k: string, v: string) => setTxt({ ...txt, [k]: v });
+  const cat = packCat && draft.categories.includes(packCat) ? packCat : draft.categories[0] || "";
+  const articles = draft.catalogue.map((c) => c.nom).filter((n) => n !== "SAC");
+
+  const togglePack = (which: "packs" | "packsGardien", art: string) => {
+    const map = which === "packs" ? draft.packs : draft.packsGardien;
+    const set = new Set(map[cat] || []);
+    set.has(art) ? set.delete(art) : set.add(art);
+    const ordered = draft.catalogue.map((c) => c.nom).filter((n) => set.has(n));
+    setDraft({ ...draft, [which]: { ...map, [cat]: ordered } });
+  };
 
   const enregistrer = async () => {
-    const next: Config = {
-      ...draft,
+    await patchConfig({
+      saison: draft.saison,
+      tarifs: draft.tarifs,
+      sacSiNouvelle: draft.sacSiNouvelle,
       remises: lines(txt.remises).map((l) => { const [n, m] = l.split("="); return { nom: (n || "").trim(), montant: Number((m || "").trim()) || 0 }; }).filter((r) => r.nom),
       categories: lines(txt.categories),
       reglements: lines(txt.reglements),
-      catalogue: lines(txt.catalogue).map((l) => { const [n, t] = l.split("="); return { nom: (n || "").trim(), tailles: (t || "").split(",").map((x) => x.trim()).filter(Boolean) }; }).filter((c) => c.nom),
-      packs: parsePacks(txt.packs),
-      packsGardien: parsePacks(txt.packsGardien),
-    };
-    await saveConfig(next);
+      packs: draft.packs,
+      packsGardien: draft.packsGardien,
+    });
     alert("Paramètres enregistrés ✔");
-  };
-
-  const importer = async (file: File) => {
-    try {
-      const o = JSON.parse(await file.text()) as { data?: VieuxJoueur[] };
-      if (!Array.isArray(o.data)) { setImportMsg("Fichier invalide (pas de 'data')."); return; }
-      if (!confirm("Importer " + o.data.length + " joueur(s) ? Ils s'ajoutent aux joueurs existants.")) return;
-      let n = 0;
-      for (const vj of o.data) { await addJoueur(mapJoueur(vj, cfg!.categories)); n++; }
-      setImportMsg("✔ " + n + " joueur(s) importé(s).");
-    } catch {
-      setImportMsg("Erreur de lecture du fichier.");
-    }
   };
 
   return (
@@ -110,6 +61,26 @@ export default function Parametres() {
       <input type="number" value={draft.tarifs.LICENCE} onChange={(e) => setDraft({ ...draft, tarifs: { ...draft.tarifs, LICENCE: +e.target.value } })} />
       <label className="check"><input type="checkbox" checked={draft.sacSiNouvelle} onChange={(e) => setDraft({ ...draft, sacSiNouvelle: e.target.checked })} /> 🎒 Sac ajouté pour les nouvelles licences</label>
 
+      {/* COMPOSITION DES PACKS */}
+      <h3 className="sec">Composition des packs</h3>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Choisis une catégorie, puis coche les articles du pack joueur et du pack gardien. (Les articles et tailles se gèrent dans l'onglet <b>Stock</b>.)</p>
+      <select value={cat} onChange={(e) => setPackCat(e.target.value)}>
+        {draft.categories.map((c) => <option key={c} value={c}>{c}</option>)}
+      </select>
+      {articles.length === 0 && <p className="muted" style={{ fontSize: 13 }}>Aucun article. Ajoute-en dans l'onglet Stock.</p>}
+      {articles.length > 0 && (
+        <div className="pktable">
+          <div className="pkhead"><span>Article</span><span>Joueur</span><span>Gardien</span></div>
+          {articles.map((art) => (
+            <div className="pkrow" key={art}>
+              <span className="pkname">{art}</span>
+              <input type="checkbox" checked={(draft.packs[cat] || []).includes(art)} onChange={() => togglePack("packs", art)} />
+              <input type="checkbox" checked={(draft.packsGardien[cat] || []).includes(art)} onChange={() => togglePack("packsGardien", art)} />
+            </div>
+          ))}
+        </div>
+      )}
+
       <h3 className="sec">Remises (nom = montant)</h3>
       <textarea rows={3} value={txt.remises} onChange={(e) => setT("remises", e.target.value)} />
 
@@ -119,21 +90,7 @@ export default function Parametres() {
       <h3 className="sec">Modes de règlement</h3>
       <textarea rows={5} value={txt.reglements} onChange={(e) => setT("reglements", e.target.value)} />
 
-      <h3 className="sec">Catalogue (article = tailles)</h3>
-      <textarea rows={8} value={txt.catalogue} onChange={(e) => setT("catalogue", e.target.value)} />
-
-      <h3 className="sec">Packs par catégorie (catégorie = articles)</h3>
-      <textarea rows={8} value={txt.packs} onChange={(e) => setT("packs", e.target.value)} />
-
-      <h3 className="sec">Packs GARDIEN par catégorie</h3>
-      <textarea rows={8} value={txt.packsGardien} onChange={(e) => setT("packsGardien", e.target.value)} />
-
       <button className="btn-primary" onClick={() => void enregistrer()}>💾 Enregistrer les paramètres</button>
-
-      <h3 className="sec">Importer l'ancienne appli</h3>
-      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Charge le fichier de sauvegarde <code>.json</code> de l'ancienne appli HTML. Les joueurs sont ajoutés (anciens gardiens et statuts convertis automatiquement).</p>
-      <input type="file" accept=".json" onChange={(e) => { const f = e.target.files?.[0]; if (f) void importer(f); e.target.value = ""; }} />
-      {importMsg && <div className="hint vert" style={{ marginTop: 8 }}>{importMsg}</div>}
     </div>
   );
 }

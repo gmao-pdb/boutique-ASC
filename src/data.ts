@@ -19,6 +19,10 @@ export function useConfig(): Config | null {
 export async function saveConfig(cfg: Config) {
   await setDoc(configRef, cfg);
 }
+// Met à jour seulement certains champs de la config (évite d'écraser le reste)
+export async function patchConfig(partial: Partial<Config>) {
+  await updateDoc(configRef, partial as Record<string, unknown>);
+}
 
 export function useJoueurs(): Joueur[] | null {
   const [joueurs, setJoueurs] = useState<Joueur[] | null>(null);

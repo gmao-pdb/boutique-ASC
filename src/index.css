@@ -104,6 +104,8 @@ input, select, textarea {
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 4px; -webkit-overflow-scrolling: touch; }
 .chip { white-space: nowrap; padding: 7px 12px; border: 1px solid var(--bord); background: #fff; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--txt); }
 .chip.on { background: var(--vert); color: #fff; border-color: var(--vert); }
+.chip:disabled { opacity: .4; }
+.lic-btns .chip { flex: 1; text-align: center; }
 
 /* Carte joueur */
 .joueur-card { background: var(--card); border: 1px solid var(--bord); border-radius: 12px; padding: 12px 14px; margin-bottom: 9px; display: flex; align-items: center; gap: 10px; }

@@ -117,6 +117,34 @@ export function defaultSize(cfg: Config, article: string, age: number | null): s
   return best;
 }
 
+/* ---------- Adulte : tailles lettres, défaut L ---------- */
+const ADULT_PREF = ["L", "L-XL", "M", "S-M", "XL", "XXL", "S"];
+export function estAdulte(age: number | null): boolean {
+  return age == null || age >= 18;
+}
+// Tailles utilisables pour un joueur : pour un adulte, on enlève les tailles "… ans" (jamais en dessous des tailles adultes).
+export function taillesEligibles(cfg: Config, article: string, age: number | null): string[] {
+  const c = cfg.catalogue.find((x) => x.nom === article);
+  if (!c) return [];
+  if (estAdulte(age)) {
+    const lettres = c.tailles.filter((t) => !/ans/i.test(t));
+    return lettres.length ? lettres : c.tailles;
+  }
+  return c.tailles;
+}
+// Taille auto : adulte -> L (ou équivalent) ; enfant -> la plus proche de l'âge.
+export function tailleAuto(cfg: Config, article: string, age: number | null): string {
+  const c = cfg.catalogue.find((x) => x.nom === article);
+  if (!c || !c.tailles.length) return "";
+  if (c.tailles.length === 1) return c.tailles[0];
+  if (estAdulte(age)) {
+    const elig = taillesEligibles(cfg, article, age);
+    for (const p of ADULT_PREF) if (elig.includes(p)) return p;
+    return elig[elig.length - 1] || "";
+  }
+  return defaultSize(cfg, article, age);
+}
+
 /* ---------- Gabarits (grille de correspondance des tailles) ---------- */
 // Pour un article et un gabarit : 1ère équivalence (dans l'ordre des systèmes) présente dans les tailles de l'article.
 export function tailleGabarit(cfg: Config, article: string, gab: Gabarit): string {

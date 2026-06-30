@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, stockId } from "../data";
 import {
-  calc, euro, autoCategorie, ageDe, packPour, defaultSize,
+  calc, euro, autoCategorie, ageDe, packPour, tailleAuto, taillesEligibles,
   chequeCount, defaultChequeDates, splitAmount, chequeAmt,
 } from "../calc";
 import { STATUT_LABEL, type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config } from "../types";
@@ -21,7 +21,7 @@ function buildPack(cfg: Config, cat: string, gardien: boolean, licence: Licence,
   const names = packPour(cfg, cat, gardien).slice();
   if (cfg.sacSiNouvelle && licence === "NOUVEAU") names.unshift("SAC");
   return names.map((nom) => {
-    const taille = defaultSize(cfg, nom, age) || "";
+    const taille = tailleAuto(cfg, nom, age) || "";
     const statut: ArticleStatut = horsStock && horsStock(nom, taille) ? "acommander" : "remis";
     return { article: nom, taille, statut };
   });
@@ -55,6 +55,7 @@ export default function FicheJoueur() {
 
   const set = (patch: Partial<Joueur>) => setDraft({ ...draft, ...patch });
   const c = calc(draft, cfg);
+  const licSeuleOk = /VETERAN|EDUCATEUR/i.test(draft.categorie);
   const horsStock = (a: string, t: string) => {
     const s = (stock || []).find((x) => x.id === stockId(a, t));
     return !!s && s.quantite <= 0;
@@ -85,7 +86,8 @@ export default function FicheJoueur() {
   const onCategorie = (cat: string) => {
     const arts = draft.articles.length === 0 || confirm("Recharger le pack de « " + cat + " » ? Les articles seront remplacés.")
       ? buildPackG(cat, draft.gardien) : draft.articles;
-    setDraft({ ...draft, categorie: cat, articles: arts });
+    const licence = draft.licence === "LICENCE" && !/VETERAN|EDUCATEUR/i.test(cat) ? "" : draft.licence;
+    setDraft({ ...draft, categorie: cat, licence, articles: arts });
   };
 
   /* ---- licence / sac ---- */
@@ -103,21 +105,16 @@ export default function FicheJoueur() {
     const arts = draft.articles.map((a, k) => (k === i ? { ...a, ...patch } : a));
     set({ articles: arts });
   };
-  const bumpTaille = (i: number, dir: number) => {
-    const cat = cfg.catalogue.find((x) => x.nom === draft.articles[i].article);
-    if (!cat || !cat.tailles.length) return;
-    let idx = cat.tailles.indexOf(draft.articles[i].taille);
-    if (idx < 0) idx = dir > 0 ? -1 : cat.tailles.length;
-    idx = Math.max(0, Math.min(cat.tailles.length - 1, idx + dir));
-    setArt(i, { taille: cat.tailles[idx] });
+  const bumpOne = (a: PackArticle, dir: number): PackArticle => {
+    const elig = taillesEligibles(cfg, a.article, age);
+    if (!elig.length) return a;
+    let idx = elig.indexOf(a.taille);
+    if (idx < 0) idx = dir > 0 ? -1 : elig.length;
+    idx = Math.max(0, Math.min(elig.length - 1, idx + dir));
+    return { ...a, taille: elig[idx] };
   };
-  const bumpAll = (dir: number) => set({ articles: draft.articles.map((a) => {
-    const cat = cfg.catalogue.find((x) => x.nom === a.article);
-    if (!cat || !cat.tailles.length) return a;
-    let idx = cat.tailles.indexOf(a.taille); if (idx < 0) idx = dir > 0 ? -1 : cat.tailles.length;
-    idx = Math.max(0, Math.min(cat.tailles.length - 1, idx + dir));
-    return { ...a, taille: cat.tailles[idx] };
-  }) });
+  const bumpTaille = (i: number, dir: number) => set({ articles: draft.articles.map((a, k) => (k === i ? bumpOne(a, dir) : a)) });
+  const bumpAll = (dir: number) => set({ articles: draft.articles.map((a) => bumpOne(a, dir)) });
   const tousStatut = (s: ArticleStatut) => set({ articles: draft.articles.map((a) => ({ ...a, statut: s })) });
 
   /* ---- remises ---- */
@@ -135,7 +132,11 @@ export default function FicheJoueur() {
       const cheques: Cheque[] = Array.from({ length: n }, (_, i) => ({ datePrev: dates[i], montant: montants[i], recup: false, enc: false }));
       setDraft({ ...draft, reglement: m, cheques, regOk: false });
     } else {
-      setDraft({ ...draft, reglement: m, cheques: [], regOk: false });
+      const z = (x: number) => String(x).padStart(2, "0");
+      const d = new Date();
+      const auj = d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
+      const regDate = m && m !== "NON RÉGLÉ" ? (draft.regDate || auj) : draft.regDate;
+      setDraft({ ...draft, reglement: m, cheques: [], regOk: false, regDate });
     }
   };
   const setCheque = (i: number, patch: Partial<Cheque>) =>
@@ -181,12 +182,11 @@ export default function FicheJoueur() {
       <label className="check"><input type="checkbox" checked={draft.gardien} onChange={(e) => onGardien(e.target.checked)} /> 🧤 Gardien (pack spécial)</label>
 
       <label>Type de licence</label>
-      <select value={draft.licence} onChange={(e) => onLicence(e.target.value as Licence)}>
-        <option value="">—</option>
-        <option value="NOUVEAU">NOUVEAU</option>
-        <option value="RENOUV.">RENOUV.</option>
-        <option value="LICENCE">LICENCE seule (vétérans)</option>
-      </select>
+      <div className="chips lic-btns">
+        <button className={"chip" + (draft.licence === "NOUVEAU" ? " on" : "")} onClick={() => onLicence("NOUVEAU")}>NOUVEAU</button>
+        <button className={"chip" + (draft.licence === "RENOUV." ? " on" : "")} onClick={() => onLicence("RENOUV.")}>RENOUV.</button>
+        <button className={"chip" + (draft.licence === "LICENCE" ? " on" : "")} disabled={!licSeuleOk} title={licSeuleOk ? "" : "Réservé aux vétérans / éducateurs"} onClick={() => onLicence("LICENCE")}>LICENCE seule</button>
+      </div>
 
       <div className="grid2">
         <div><label>Nom</label><input value={draft.nom} onChange={(e) => set({ nom: e.target.value })} /></div>
@@ -197,10 +197,16 @@ export default function FicheJoueur() {
 
       {/* PACK */}
       <h3 className="sec">Pack à remettre</h3>
+      <div className="row-btns">
+        <button className="mini" onClick={() => bumpAll(-1)}>▾ Tailles −</button>
+        <button className="mini" onClick={() => bumpAll(1)}>▴ Tailles +</button>
+        <button className="mini" onClick={() => tousStatut("remis")}>✅ Tout remis</button>
+        <button className="mini" onClick={rechargerPack}>↻ Recharger</button>
+      </div>
       {draft.articles.map((a, i) => (
         <div key={i} className={"art" + (a.statut !== "remis" ? " off" : "")}>
           <div className="art-l1">
-            <select className="art-name" value={a.article} onChange={(e) => setArt(i, { article: e.target.value, taille: defaultSize(cfg, e.target.value, age) || "" })}>
+            <select className="art-name" value={a.article} onChange={(e) => setArt(i, { article: e.target.value, taille: tailleAuto(cfg, e.target.value, age) || "" })}>
               {cfg.catalogue.map((cat) => <option key={cat.nom} value={cat.nom}>{cat.nom}</option>)}
             </select>
             <button className="szb" onClick={() => bumpTaille(i, -1)}>−</button>
@@ -218,12 +224,6 @@ export default function FicheJoueur() {
           </div>
         </div>
       ))}
-      <div className="row-btns">
-        <button className="mini" onClick={() => bumpAll(-1)}>▾ Tailles −</button>
-        <button className="mini" onClick={() => bumpAll(1)}>▴ Tailles +</button>
-        <button className="mini" onClick={() => tousStatut("remis")}>✅ Tout remis</button>
-        <button className="mini" onClick={rechargerPack}>↻ Recharger</button>
-      </div>
 
       {/* REMISES */}
       <h3 className="sec">Remises</h3>

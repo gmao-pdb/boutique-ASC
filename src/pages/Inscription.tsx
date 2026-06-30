@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useConfig, addPreinscription } from "../data";
-import { autoCategorie, ageDe, packPour, defaultSize } from "../calc";
+import { autoCategorie, ageDe, packPour, tailleAuto } from "../calc";
 
 export default function Inscription() {
   const cfg = useConfig();
@@ -24,7 +24,7 @@ export default function Inscription() {
     const a = yy >= 1930 && yy <= 2099 ? ageDe(yy, cfg) : null;
     const cat = a != null ? autoCategorie(yy, cfg) : "";
     const names = cat ? packPour(cfg, cat, g) : [];
-    setArticles(names.map((n) => ({ article: n, taille: defaultSize(cfg, n, a) || "" })));
+    setArticles(names.map((n) => ({ article: n, taille: tailleAuto(cfg, n, a) || "" })));
   };
   const onDate = (v: string) => { setDate(v); rebuild(v, gardien); };
   const onGardien = (g: boolean) => { setGardien(g); rebuild(date, g); };

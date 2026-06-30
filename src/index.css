@@ -216,6 +216,12 @@ input, select, textarea {
 .pkrow .pkname { padding: 9px 10px; font-size: 14px; }
 .pkrow input { width: 20px; height: 20px; justify-self: center; }
 
+/* Lignes éditables (Paramètres) */
+.editrow { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; }
+.editrow input { flex: 1; }
+.editrow input.w90 { flex: none; width: 90px; text-align: right; }
+.editrow .unit { color: var(--muted); font-weight: 600; }
+
 /* Grille des gabarits */
 .grid-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0; }
 .gtable { border-collapse: collapse; }

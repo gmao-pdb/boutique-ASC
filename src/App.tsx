@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, NavLink, Outlet } from "react-router-dom"
 import { AuthProvider, useAuth } from "./auth";
 import Login from "./pages/Login";
 import Joueurs from "./pages/Joueurs";
+import FicheJoueur from "./pages/FicheJoueur";
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -48,6 +49,7 @@ function Root() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Joueurs />} />
+          <Route path="joueur/:id" element={<FicheJoueur />} />
           <Route path="cheques" element={<Placeholder titre="Chèques / dépôts" />} />
           <Route path="stock" element={<Placeholder titre="Stock & approvisionnement" />} />
           <Route path="parametres" element={<Placeholder titre="Paramètres" />} />

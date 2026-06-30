@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useConfig, useJoueurs, addJoueur, deleteJoueur } from "../data";
+import { useNavigate } from "react-router-dom";
+import { useConfig, useJoueurs, deleteJoueur } from "../data";
 import { calc, euro } from "../calc";
 import type { Joueur } from "../types";
 
@@ -13,6 +14,7 @@ const PAY_FILTERS = [
 export default function Joueurs() {
   const config = useConfig();
   const joueurs = useJoueurs();
+  const nav = useNavigate();
   const [q, setQ] = useState("");
   const [selCats, setSelCats] = useState<Set<string>>(new Set());
   const [pay, setPay] = useState("");
@@ -46,18 +48,10 @@ export default function Joueurs() {
 
   if (!config || !joueurs) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
-  // Temporaire (P2) : insérer un joueur d'essai pour tester la liste
-  const ajoutTest = () =>
-    addJoueur({
-      categorie: "SENIORS", gardien: false, licence: "NOUVEAU",
-      nom: "Test " + Math.floor(Math.random() * 99), prenom: "Joueur", annee: "2000", tel: "",
-      articles: [], remises: [], reglement: "3 CHEQUES",
-      cheques: [{ datePrev: "", recup: true, enc: true }, { datePrev: "", recup: true, enc: false }, { datePrev: "", recup: false, enc: false }],
-      regOk: false, regDate: "", commentaires: "",
-    });
-
   return (
     <>
+      <button className="btn-primary" style={{ marginBottom: 14 }} onClick={() => nav("/joueur/new")}>+ Nouveau joueur</button>
+
       <div className="totaux">
         <div className="t-item"><span>Total</span><b>{euro(tot.total)}</b></div>
         <div className="t-item due"><span>À récupérer</span><b>{euro(tot.recup)}</b></div>
@@ -84,7 +78,7 @@ export default function Joueurs() {
       {rows.length === 0 && <div className="card muted">Aucun joueur. Ajoute-en un.</div>}
 
       {rows.map(({ p, c }) => (
-        <div key={p.id} className={"joueur-card" + (c.aRecuperer > 0 ? " torecover" : "")}>
+        <div key={p.id} className={"joueur-card" + (c.aRecuperer > 0 ? " torecover" : "")} onClick={() => nav("/joueur/" + p.id)}>
           <div className="jc-main">
             <div className="jc-cat">{p.gardien ? "🧤 " : ""}{p.categorie}</div>
             <div className="jc-nom"><b>{p.nom}</b> {p.prenom}</div>
@@ -96,12 +90,10 @@ export default function Joueurs() {
           </div>
           <div className="jc-side">
             <div className="jc-reste" style={{ color: c.reste > 0 ? "var(--rouge)" : "var(--vert)" }}>{euro(c.reste)}</div>
-            <button className="jc-del" onClick={() => { if (confirm("Supprimer " + p.nom + " ?")) void deleteJoueur(p.id); }}>🗑️</button>
+            <button className="jc-del" onClick={(e) => { e.stopPropagation(); if (confirm("Supprimer " + p.nom + " ?")) void deleteJoueur(p.id); }}>🗑️</button>
           </div>
         </div>
       ))}
-
-      <button className="btn-primary" style={{ marginTop: 16, opacity: .85 }} onClick={() => void ajoutTest()}>+ Ajouter un joueur d'essai (test P2)</button>
     </>
   );
 }

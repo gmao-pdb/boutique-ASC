@@ -41,12 +41,21 @@ export interface Joueur {
   regOk: boolean;
   regDate: string;
   commentaires: string;
+  gabarit?: string; // gabarit de taille choisi
   createdAt?: number;
   updatedAt?: number;
 }
 
 export interface Remise { nom: string; montant: number; }
 export interface CatalogueItem { nom: string; tailles: string[]; }
+
+// Gabarit = une ligne de la grille de correspondance des tailles.
+// valeurs : pour chaque système (colonne), la taille équivalente.
+export interface Gabarit {
+  label: string;
+  ageMax: number | null; // âge max pour l'auto-sélection (null = adulte / pas d'âge)
+  valeurs: Record<string, string>;
+}
 
 export interface Config {
   saison: string;
@@ -58,6 +67,8 @@ export interface Config {
   catalogue: CatalogueItem[];
   packs: Record<string, string[]>;
   packsGardien: Record<string, string[]>;
+  systemes: string[]; // colonnes de la grille, ex. Âge / Tranche / Lettre / Combiné / Unique
+  gabarits: Gabarit[];
 }
 
 // Stock : une entrée par article + taille

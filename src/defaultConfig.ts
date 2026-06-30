@@ -1,4 +1,4 @@
-import type { Config, CatalogueItem } from "./types";
+import type { Config, CatalogueItem, Gabarit } from "./types";
 
 // Packs par catégorie (repris de l'appli existante)
 const PK_JEUNE = ["VESTE JOGGING", "PANTALON JOGGING", "PULL", "SHORT DE MATCH", "MAILLOT MATCH", "BRAMA JAUNE", "CHAUSSETTES VERTES"];
@@ -30,6 +30,23 @@ const catalogue: CatalogueItem[] = [
   { nom: "DOUDOUNE", tailles: D }, { nom: "JOGGING NOIR EDUC.", tailles: A },
 ];
 
+const SYSTEMES = ["Âge", "Tranche", "Lettre", "Combiné", "Unique"];
+const g = (label: string, ageMax: number | null, age: string, tr: string, lt: string, cb: string): Gabarit => ({
+  label, ageMax, valeurs: { "Âge": age, "Tranche": tr, "Lettre": lt, "Combiné": cb, "Unique": "Taille unique" },
+});
+const GABARITS: Gabarit[] = [
+  g("4 ans", 5, "4 ans", "4-6 ans", "XS", "S-M"),
+  g("6 ans", 7, "6 ans", "4-6 ans", "XS", "S-M"),
+  g("8 ans", 9, "8 ans", "8-10 ans", "S", "S-M"),
+  g("10 ans", 11, "10 ans", "8-10 ans", "S", "S-M"),
+  g("12 ans", 13, "12 ans", "12-14 ans", "M", "L-XL"),
+  g("Ado", 16, "12 ans", "12-14 ans", "M", "L-XL"),
+  g("Adulte S", null, "", "", "S", "S-M"),
+  g("Adulte M", null, "", "", "M", "L-XL"),
+  g("Adulte L", null, "", "", "L", "L-XL"),
+  g("Adulte XL", null, "", "", "XL", "L-XL"),
+];
+
 export const DEFAULT_CONFIG: Config = {
   saison: "2025-2026",
   tarifs: { NOUVEAU: 250, "RENOUV.": 120, LICENCE: 80 },
@@ -51,4 +68,6 @@ export const DEFAULT_CONFIG: Config = {
     "U8 - U9": PK_GARDJ, "U10 - U11": PK_GARDJ, "U12 - U13": PK_GARD12,
     U14: PK_GARDG, U16: PK_GARDG, U18: PK_GARDG, SENIORS: PK_GARDG, FEMININES: PK_GARDG, VETERANS: PK_GARDG,
   },
+  systemes: SYSTEMES,
+  gabarits: GABARITS,
 };

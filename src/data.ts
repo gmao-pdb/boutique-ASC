@@ -10,8 +10,13 @@ export function useConfig(): Config | null {
   const [config, setConfig] = useState<Config | null>(null);
   useEffect(() => {
     return onSnapshot(configRef, (snap) => {
-      if (snap.exists()) setConfig(snap.data() as Config);
-      else void setDoc(configRef, DEFAULT_CONFIG); // 1ère fois : on sème la config par défaut
+      if (snap.exists()) {
+        const c = snap.data() as Config;
+        // complète les champs ajoutés après coup (config déjà en base)
+        if (!c.systemes || !c.systemes.length) c.systemes = DEFAULT_CONFIG.systemes;
+        if (!c.gabarits || !c.gabarits.length) c.gabarits = DEFAULT_CONFIG.gabarits;
+        setConfig(c);
+      } else void setDoc(configRef, DEFAULT_CONFIG); // 1ère fois : on sème la config par défaut
     });
   }, []);
   return config;

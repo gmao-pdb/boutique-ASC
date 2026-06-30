@@ -1,14 +1,18 @@
 import { BrowserRouter, Routes, Route, NavLink, Outlet } from "react-router-dom";
+import { AuthProvider, useAuth } from "./auth";
+import Login from "./pages/Login";
 
 function Layout() {
+  const { user, logout } = useAuth();
   return (
     <div className="app-shell">
       <header className="app-header">
         <div className="logo">ASC</div>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1>Boutique AS Casinca</h1>
           <div className="sub">Saison 2025-2026</div>
         </div>
+        <button className="header-logout" onClick={logout} title={user?.email ?? ""}>Quitter</button>
       </header>
 
       <main className="app-main">
@@ -34,7 +38,10 @@ function Placeholder({ titre }: { titre: string }) {
   );
 }
 
-export default function App() {
+function Root() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="full-center muted">Chargement…</div>;
+  if (!user) return <Login />;
   return (
     <BrowserRouter>
       <Routes>
@@ -46,5 +53,13 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Root />
+    </AuthProvider>
   );
 }

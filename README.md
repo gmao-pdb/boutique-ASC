@@ -21,7 +21,7 @@ npm run dev
 
 ## Avancement
 - [x] P0 — squelette (shell, navigation, connexion Firebase câblée)
-- [ ] P1 — authentification + règles Firestore
+- [x] P1 — authentification (login e-mail/mdp) + règles Firestore + modèle de données
 - [ ] P2 — liste joueurs
 - [ ] P3 — fiche joueur (packs, catégories FFF, gardien, sac)
 - [ ] P4 — chèques / dépôts

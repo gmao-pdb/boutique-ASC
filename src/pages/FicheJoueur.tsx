@@ -184,8 +184,8 @@ export default function FicheJoueur() {
         <b>{isNew ? "Nouveau joueur" : draft.nom + " " + draft.prenom}</b>
       </div>
 
-      <label>Année de naissance</label>
-      <input inputMode="numeric" placeholder="ex. 2012" value={draft.annee} onChange={(e) => onAnnee(e.target.value)} />
+      <label>Date de naissance</label>
+      <input type="date" value={draft.annee} onChange={(e) => onAnnee(e.target.value)} />
       {age != null && <div className="hint vert">🎂 {age} ans → {draft.categorie}{draft.gardien ? " · 🧤 pack gardien" : ""}</div>}
 
       <label>Catégorie</label>

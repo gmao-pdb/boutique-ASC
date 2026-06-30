@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./auth";
 import Login from "./pages/Login";
 import Joueurs from "./pages/Joueurs";
 import FicheJoueur from "./pages/FicheJoueur";
+import Cheques from "./pages/Cheques";
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -50,7 +51,7 @@ function Root() {
         <Route element={<Layout />}>
           <Route index element={<Joueurs />} />
           <Route path="joueur/:id" element={<FicheJoueur />} />
-          <Route path="cheques" element={<Placeholder titre="Chèques / dépôts" />} />
+          <Route path="cheques" element={<Cheques />} />
           <Route path="stock" element={<Placeholder titre="Stock & approvisionnement" />} />
           <Route path="parametres" element={<Placeholder titre="Paramètres" />} />
         </Route>

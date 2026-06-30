@@ -148,3 +148,14 @@ input, select, textarea {
 .recap { margin: 18px 0 10px; font-size: 15px; }
 .recap b { font-size: 18px; }
 .btn-danger { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(--rouge); background: #fff; color: var(--rouge); border-radius: 10px; font-weight: 700; }
+
+/* Chèques */
+.chq-card { background: var(--card); border: 1px solid var(--bord); border-radius: 12px; padding: 11px 13px; margin-bottom: 9px; }
+.chq-card.done { opacity: .55; }
+.chq-card.late { box-shadow: inset 4px 0 0 var(--rouge); }
+.cc-top { font-size: 14px; margin-bottom: 7px; }
+.cc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.cc-row .dt { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.cc-row .dt input { width: auto; font-size: 14px; padding: 7px; }
+.cc-row .mt input { width: 76px; font-size: 14px; padding: 7px; text-align: right; }
+.late-b { color: var(--rouge); font-weight: 800; font-size: 11px; }

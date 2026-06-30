@@ -57,7 +57,7 @@ export const DEFAULT_CONFIG: Config = {
     { nom: "Fratrie", montant: 15 },
   ],
   categories: ["BABIES", "U6 - U7", "U8 - U9", "U10 - U11", "U12 - U13", "U14", "U16", "U18", "SENIORS", "FEMININES", "FUTNET", "VETERANS", "EDUCATEURS"],
-  reglements: ["ESPECES", "1 CHEQUE", "3 CHEQUES", "4 CHEQUES", "5 CHEQUES", "CB", "VIREMENT", "AUTRE", "NON RÉGLÉ"],
+  reglements: ["ESPECES", "1 CHEQUE", "2 CHEQUES", "3 CHEQUES", "4 CHEQUES", "5 CHEQUES", "CB", "VIREMENT", "AUTRE", "NON RÉGLÉ"],
   catalogue,
   packs: {
     BABIES: PK_JEUNE, "U6 - U7": PK_JEUNE, "U8 - U9": PK_JEUNE, "U10 - U11": PK_JEUNE,

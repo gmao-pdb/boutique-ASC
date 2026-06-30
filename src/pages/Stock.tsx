@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useConfig, useJoueurs, useStock, setStockItem, enregistrerInventaire, stockId, patchConfig } from "../data";
-import { STATUT_LABEL, type ArticleStatut, type CatalogueItem, type Gabarit, type StockItem } from "../types";
+import { STATUT_LABEL, type ArticleStatut, type CatalogueItem, type StockItem } from "../types";
 
 const MANQ_STATUTS: ArticleStatut[] = ["acommander", "arecuperer", "alivrer"];
 
@@ -8,13 +8,11 @@ export default function Stock() {
   const cfg = useConfig();
   const joueurs = useJoueurs();
   const stock = useStock();
-  const [vue, setVue] = useState<"manquants" | "articles" | "tailles">("articles");
+  const [vue, setVue] = useState<"manquants" | "articles">("articles");
   const [alertesSeules, setAlertesSeules] = useState(false);
   const [newSize, setNewSize] = useState<Record<string, string>>({});
   const [newArt, setNewArt] = useState("");
   const [artQ, setArtQ] = useState("");
-  const [grid, setGrid] = useState<{ systemes: string[]; gabarits: Gabarit[] } | null>(null);
-  const [newCol, setNewCol] = useState("");
 
   const stockMap = useMemo(() => {
     const m = new Map<string, StockItem>();
@@ -39,18 +37,6 @@ export default function Stock() {
   }, [joueurs]);
 
   if (!cfg || !joueurs || !stock) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
-
-  if (vue === "tailles" && grid === null) setGrid({ systemes: [...cfg.systemes], gabarits: JSON.parse(JSON.stringify(cfg.gabarits)) });
-
-  /* ----- grille des gabarits ----- */
-  const saveGrid = () => { if (grid) void patchConfig({ systemes: grid.systemes, gabarits: grid.gabarits }).then(() => alert("Grille enregistrée ✔")); };
-  const setCell = (i: number, sys: string, v: string) => grid && setGrid({ ...grid, gabarits: grid.gabarits.map((g, k) => (k === i ? { ...g, valeurs: { ...g.valeurs, [sys]: v } } : g)) });
-  const setLabel = (i: number, v: string) => grid && setGrid({ ...grid, gabarits: grid.gabarits.map((g, k) => (k === i ? { ...g, label: v } : g)) });
-  const setAge = (i: number, v: string) => grid && setGrid({ ...grid, gabarits: grid.gabarits.map((g, k) => (k === i ? { ...g, ageMax: v === "" ? null : Math.max(0, Math.round(+v || 0)) } : g)) });
-  const addRow = () => grid && setGrid({ ...grid, gabarits: [...grid.gabarits, { label: "Nouveau", ageMax: null, valeurs: {} }] });
-  const removeRow = (i: number) => grid && setGrid({ ...grid, gabarits: grid.gabarits.filter((_, k) => k !== i) });
-  const addCol = () => { const c = newCol.trim(); if (!c || !grid || grid.systemes.includes(c)) return; setGrid({ ...grid, systemes: [...grid.systemes, c] }); setNewCol(""); };
-  const removeCol = (c: string) => grid && setGrid({ ...grid, systemes: grid.systemes.filter((s) => s !== c), gabarits: grid.gabarits.map((g) => { const v = { ...g.valeurs }; delete v[c]; return { ...g, valeurs: v }; }) });
 
   /* ----- gestion du catalogue (articles + tailles) ----- */
   const saveCatalogue = (next: CatalogueItem[]) => void patchConfig({ catalogue: next });
@@ -83,7 +69,6 @@ export default function Stock() {
     <>
       <div className="chips">
         <button className={"chip" + (vue === "articles" ? " on" : "")} onClick={() => setVue("articles")}>📦 Articles & stock</button>
-        <button className={"chip" + (vue === "tailles" ? " on" : "")} onClick={() => setVue("tailles")}>📐 Tailles</button>
         <button className={"chip" + (vue === "manquants" ? " on" : "")} onClick={() => setVue("manquants")}>🛒 Manquants</button>
       </div>
 
@@ -181,38 +166,6 @@ export default function Stock() {
         );
       })()}
 
-      {vue === "tailles" && grid && (
-        <>
-          <p className="muted" style={{ fontSize: 13 }}>Chaque ligne = un gabarit. Sur la fiche joueur, le gabarit remplit les tailles : pour chaque article, la 1ʳᵉ équivalence (dans l'ordre des colonnes) présente dans ses tailles.</p>
-          <div className="grid-scroll">
-            <table className="gtable">
-              <thead>
-                <tr>
-                  <th>Gabarit</th><th>Âge max</th>
-                  {grid.systemes.map((s) => <th key={s}>{s} <button className="x" onClick={() => removeCol(s)}>✕</button></th>)}
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {grid.gabarits.map((g, i) => (
-                  <tr key={i}>
-                    <td><input value={g.label} onChange={(e) => setLabel(i, e.target.value)} /></td>
-                    <td><input className="w50" type="number" value={g.ageMax ?? ""} placeholder="—" onChange={(e) => setAge(i, e.target.value)} /></td>
-                    {grid.systemes.map((s) => <td key={s}><input className="w70" value={g.valeurs[s] || ""} onChange={(e) => setCell(i, s, e.target.value)} /></td>)}
-                    <td><button className="x" onClick={() => removeRow(i)}>🗑️</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="addrow">
-            <input placeholder="nouvelle colonne" value={newCol} onChange={(e) => setNewCol(e.target.value)} />
-            <button className="mini" onClick={addCol}>+ colonne</button>
-            <button className="mini" onClick={addRow}>+ gabarit</button>
-          </div>
-          <button className="btn-primary" onClick={saveGrid}>💾 Enregistrer la grille</button>
-        </>
-      )}
     </>
   );
 }

@@ -4,7 +4,6 @@ import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur,
 import {
   calc, euro, autoCategorie, ageDe, packPour, defaultSize,
   chequeCount, defaultChequeDates, splitAmount, chequeAmt,
-  tailleGabarit, gabaritPourAge, gabaritParLabel,
 } from "../calc";
 import { STATUT_LABEL, type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config } from "../types";
 
@@ -60,15 +59,8 @@ export default function FicheJoueur() {
     const s = (stock || []).find((x) => x.id === stockId(a, t));
     return !!s && s.quantite <= 0;
   };
-  // applique les tailles du gabarit aux articles
-  const appliqueGab = (arts: PackArticle[], label: string | undefined): PackArticle[] => {
-    const gab = label ? gabaritParLabel(cfg, label) : gabaritPourAge(cfg, age);
-    if (!gab) return arts;
-    return arts.map((a) => { const t = tailleGabarit(cfg, a.article, gab); return t ? { ...a, taille: t } : a; });
-  };
-  // construit un pack et applique le gabarit courant
   const buildPackG = (cat: string, gardien: boolean) =>
-    appliqueGab(buildPack(cfg, cat, gardien, draft.licence, age, horsStock), draft.gabarit);
+    buildPack(cfg, cat, gardien, draft.licence, age, horsStock);
 
   /* ---- catégorie / pack ---- */
   const onAnnee = (v: string) => {
@@ -78,18 +70,12 @@ export default function FicheJoueur() {
       const a = ageDe(y, cfg);
       const cat = autoCategorie(y, cfg);
       if (cat) next.categorie = cat;
-      const gab = gabaritPourAge(cfg, a);
-      if (gab) next.gabarit = gab.label;
       if (isNew || draft.articles.length === 0) {
-        let arts = buildPack(cfg, next.categorie ?? draft.categorie, draft.gardien, draft.licence, a, horsStock);
-        if (gab) arts = arts.map((x) => { const t = tailleGabarit(cfg, x.article, gab); return t ? { ...x, taille: t } : x; });
-        next.articles = arts;
+        next.articles = buildPack(cfg, next.categorie ?? draft.categorie, draft.gardien, draft.licence, a, horsStock);
       }
     }
     setDraft({ ...draft, ...next });
   };
-  const choisirGabarit = (label: string) =>
-    setDraft({ ...draft, gabarit: label, articles: appliqueGab(draft.articles, label) });
   const rechargerPack = () => set({ articles: buildPackG(draft.categorie, draft.gardien) });
   const onGardien = (g: boolean) => {
     const arts = draft.articles.length === 0 || confirm("Recharger le pack (version " + (g ? "gardien" : "joueur") + ") ? Les articles seront remplacés.")
@@ -208,15 +194,6 @@ export default function FicheJoueur() {
       </div>
       <label>Téléphone</label>
       <input type="tel" value={draft.tel} onChange={(e) => set({ tel: e.target.value })} />
-
-      {/* GABARIT */}
-      <h3 className="sec">Gabarit de taille</h3>
-      <div className="chips">
-        {cfg.gabarits.map((gb) => (
-          <button key={gb.label} className={"chip" + (draft.gabarit === gb.label ? " on" : "")} onClick={() => choisirGabarit(gb.label)}>{gb.label}</button>
-        ))}
-      </div>
-      <div className="hint" style={{ color: "var(--muted)" }}>Choisis un gabarit → les tailles du pack se remplissent. (Ajustables à la main ensuite.)</div>
 
       {/* PACK */}
       <h3 className="sec">Pack à remettre</h3>

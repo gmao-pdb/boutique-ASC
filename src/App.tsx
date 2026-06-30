@@ -4,6 +4,8 @@ import Login from "./pages/Login";
 import Joueurs from "./pages/Joueurs";
 import FicheJoueur from "./pages/FicheJoueur";
 import Cheques from "./pages/Cheques";
+import Stock from "./pages/Stock";
+import Parametres from "./pages/Parametres";
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -32,15 +34,6 @@ function Layout() {
   );
 }
 
-function Placeholder({ titre }: { titre: string }) {
-  return (
-    <div className="card">
-      <h2 style={{ marginTop: 0 }}>{titre}</h2>
-      <p className="muted">Écran à venir — squelette en place (P0). ✅</p>
-    </div>
-  );
-}
-
 function Root() {
   const { user, loading } = useAuth();
   if (loading) return <div className="full-center muted">Chargement…</div>;
@@ -52,8 +45,8 @@ function Root() {
           <Route index element={<Joueurs />} />
           <Route path="joueur/:id" element={<FicheJoueur />} />
           <Route path="cheques" element={<Cheques />} />
-          <Route path="stock" element={<Placeholder titre="Stock & approvisionnement" />} />
-          <Route path="parametres" element={<Placeholder titre="Paramètres" />} />
+          <Route path="stock" element={<Stock />} />
+          <Route path="parametres" element={<Parametres />} />
         </Route>
       </Routes>
     </BrowserRouter>

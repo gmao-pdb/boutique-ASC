@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useConfig, useJoueurs, addJoueur, updateJoueur, deleteJoueur } from "../data";
+import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, stockId } from "../data";
 import {
   calc, euro, autoCategorie, ageDe, packPour, defaultSize,
   chequeCount, defaultChequeDates, splitAmount, chequeAmt,
@@ -17,15 +17,20 @@ function blankJoueur(cfg: Config): Joueur {
   };
 }
 
-function buildPack(cfg: Config, cat: string, gardien: boolean, licence: Licence, age: number | null): PackArticle[] {
+function buildPack(cfg: Config, cat: string, gardien: boolean, licence: Licence, age: number | null, horsStock?: (a: string, t: string) => boolean): PackArticle[] {
   const names = packPour(cfg, cat, gardien).slice();
   if (cfg.sacSiNouvelle && licence === "NOUVEAU") names.unshift("SAC");
-  return names.map((nom) => ({ article: nom, taille: defaultSize(cfg, nom, age) || "", statut: "remis" as ArticleStatut }));
+  return names.map((nom) => {
+    const taille = defaultSize(cfg, nom, age) || "";
+    const statut: ArticleStatut = horsStock && horsStock(nom, taille) ? "acommander" : "remis";
+    return { article: nom, taille, statut };
+  });
 }
 
 export default function FicheJoueur() {
   const cfg = useConfig();
   const joueurs = useJoueurs();
+  const stock = useStock();
   const nav = useNavigate();
   const { id } = useParams();
   const isNew = id === "new";
@@ -50,6 +55,10 @@ export default function FicheJoueur() {
 
   const set = (patch: Partial<Joueur>) => setDraft({ ...draft, ...patch });
   const c = calc(draft, cfg);
+  const horsStock = (a: string, t: string) => {
+    const s = (stock || []).find((x) => x.id === stockId(a, t));
+    return !!s && s.quantite <= 0;
+  };
 
   /* ---- catégorie / pack ---- */
   const onAnnee = (v: string) => {
@@ -58,19 +67,19 @@ export default function FicheJoueur() {
     if (y && y >= 1930 && y <= 2099) {
       const cat = autoCategorie(y, cfg);
       if (cat) next.categorie = cat;
-      if (isNew || draft.articles.length === 0) next.articles = buildPack(cfg, next.categorie ?? draft.categorie, draft.gardien, draft.licence, ageDe(y, cfg));
+      if (isNew || draft.articles.length === 0) next.articles = buildPack(cfg, next.categorie ?? draft.categorie, draft.gardien, draft.licence, ageDe(y, cfg), horsStock);
     }
     setDraft({ ...draft, ...next });
   };
-  const rechargerPack = () => set({ articles: buildPack(cfg, draft.categorie, draft.gardien, draft.licence, age) });
+  const rechargerPack = () => set({ articles: buildPack(cfg, draft.categorie, draft.gardien, draft.licence, age, horsStock) });
   const onGardien = (g: boolean) => {
     const arts = draft.articles.length === 0 || confirm("Recharger le pack (version " + (g ? "gardien" : "joueur") + ") ? Les articles seront remplacés.")
-      ? buildPack(cfg, draft.categorie, g, draft.licence, age) : draft.articles;
+      ? buildPack(cfg, draft.categorie, g, draft.licence, age, horsStock) : draft.articles;
     setDraft({ ...draft, gardien: g, articles: arts });
   };
   const onCategorie = (cat: string) => {
     const arts = draft.articles.length === 0 || confirm("Recharger le pack de « " + cat + " » ? Les articles seront remplacés.")
-      ? buildPack(cfg, cat, draft.gardien, draft.licence, age) : draft.articles;
+      ? buildPack(cfg, cat, draft.gardien, draft.licence, age, horsStock) : draft.articles;
     setDraft({ ...draft, categorie: cat, articles: arts });
   };
 

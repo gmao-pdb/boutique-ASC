@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { DEFAULT_CONFIG } from "./defaultConfig";
-import type { Config, Joueur } from "./types";
+import type { Config, Joueur, StockItem } from "./types";
 
 const configRef = doc(db, "config", "main");
 
@@ -37,4 +37,24 @@ export async function updateJoueur(id: string, j: Partial<Joueur>) {
 }
 export async function deleteJoueur(id: string) {
   await deleteDoc(doc(db, "joueurs", id));
+}
+
+/* ---------- Stock ---------- */
+export const stockId = (article: string, taille: string) => (article + "__" + taille).replace(/\//g, "-");
+
+export function useStock(): StockItem[] | null {
+  const [stock, setStock] = useState<StockItem[] | null>(null);
+  useEffect(() => {
+    return onSnapshot(collection(db, "stock"), (snap) => {
+      setStock(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<StockItem, "id">) })));
+    });
+  }, []);
+  return stock;
+}
+export async function setStockItem(article: string, taille: string, patch: Partial<StockItem>) {
+  const id = stockId(article, taille);
+  await setDoc(doc(db, "stock", id), { article, taille, quantite: 0, seuilMini: 0, ...patch, id }, { merge: true });
+}
+export async function enregistrerInventaire(lignes: { article: string; taille: string; quantite: number }[]) {
+  await addDoc(collection(db, "inventaires"), { date: new Date().toISOString(), lignes });
 }

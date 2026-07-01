@@ -61,87 +61,109 @@ export default function Parametres() {
   };
 
   return (
-    <div className="fiche">
-      <h3 className="sec">Saison</h3>
-      <input value={draft.saison} onChange={(e) => upd({ saison: e.target.value })} />
-
-      <h3 className="sec">Tarifs selon la licence (€)</h3>
-      <div className="grid2">
-        <div><label>NOUVEAU</label><input type="number" value={draft.tarifs.NOUVEAU} onChange={(e) => upd({ tarifs: { ...draft.tarifs, NOUVEAU: +e.target.value } })} /></div>
-        <div><label>RENOUV.</label><input type="number" value={draft.tarifs["RENOUV."]} onChange={(e) => upd({ tarifs: { ...draft.tarifs, "RENOUV.": +e.target.value } })} /></div>
-      </div>
-      <label>LICENCE seule</label>
-      <input type="number" value={draft.tarifs.LICENCE} onChange={(e) => upd({ tarifs: { ...draft.tarifs, LICENCE: +e.target.value } })} />
-      <label className="check"><input type="checkbox" checked={draft.sacSiNouvelle} onChange={(e) => upd({ sacSiNouvelle: e.target.checked })} /> 🎒 Sac ajouté pour les nouvelles licences</label>
-
-      <h3 className="sec">Remises</h3>
-      {draft.remises.map((r, i) => (
-        <div className="editrow" key={i}>
-          <input placeholder="Nom (ex. Fratrie)" value={r.nom} onChange={(e) => setRemise(i, "nom", e.target.value)} />
-          <input className="w90" type="number" value={r.montant} onChange={(e) => setRemise(i, "montant", e.target.value)} />
-          <span className="unit">€</span>
-          <button className="x" onClick={() => delRemise(i)}>✕</button>
+    <div className="params-tiles">
+      <details className="param-tile" open>
+        <summary>🗓️ Saison & tarifs</summary>
+        <div className="pt-body">
+          <label>Saison</label>
+          <input value={draft.saison} onChange={(e) => upd({ saison: e.target.value })} />
+          <div className="grid2" style={{ marginTop: 10 }}>
+            <div><label>NOUVEAU (€)</label><input type="number" value={draft.tarifs.NOUVEAU} onChange={(e) => upd({ tarifs: { ...draft.tarifs, NOUVEAU: +e.target.value } })} /></div>
+            <div><label>RENOUV. (€)</label><input type="number" value={draft.tarifs["RENOUV."]} onChange={(e) => upd({ tarifs: { ...draft.tarifs, "RENOUV.": +e.target.value } })} /></div>
+          </div>
+          <label>LICENCE seule (€)</label>
+          <input type="number" value={draft.tarifs.LICENCE} onChange={(e) => upd({ tarifs: { ...draft.tarifs, LICENCE: +e.target.value } })} />
+          <label className="check"><input type="checkbox" checked={draft.sacSiNouvelle} onChange={(e) => upd({ sacSiNouvelle: e.target.checked })} /> 🎒 Sac pour les nouvelles licences</label>
         </div>
-      ))}
-      <button className="mini" onClick={addRemise}>+ Ajouter une remise</button>
+      </details>
 
-      <h3 className="sec">Composition des packs</h3>
-      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Choisis une catégorie, coche les articles du pack joueur / gardien. (Articles & tailles → onglet Stock.)</p>
-      <select value={cat} onChange={(e) => setPackCat(e.target.value)}>
-        {draft.categories.map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>
-      {articles.length > 0 && (
-        <div className="pktable">
-          <div className="pkhead"><span>Article</span><span>Joueur</span><span>Gardien</span></div>
-          {articles.map((art) => (
-            <div className="pkrow" key={art}>
-              <span className="pkname">{art}</span>
-              <input type="checkbox" checked={(draft.packs[cat] || []).includes(art)} onChange={() => togglePack("packs", art)} />
-              <input type="checkbox" checked={(draft.packsGardien[cat] || []).includes(art)} onChange={() => togglePack("packsGardien", art)} />
+      <details className="param-tile">
+        <summary>🏷️ Remises</summary>
+        <div className="pt-body">
+          {draft.remises.map((r, i) => (
+            <div className="editrow" key={i}>
+              <input placeholder="Nom (ex. Fratrie)" value={r.nom} onChange={(e) => setRemise(i, "nom", e.target.value)} />
+              <input className="w90" type="number" value={r.montant} onChange={(e) => setRemise(i, "montant", e.target.value)} />
+              <span className="unit">€</span>
+              <button className="x" onClick={() => delRemise(i)}>✕</button>
             </div>
           ))}
+          <button className="mini" onClick={addRemise}>+ Ajouter une remise</button>
         </div>
-      )}
+      </details>
 
-      <h3 className="sec">Catégories</h3>
-      {draft.categories.map((c, i) => (
-        <div className="editrow" key={i}>
-          <input value={c} onChange={(e) => setCat(i, e.target.value)} />
-          <button className="x" onClick={() => delCat(i)}>✕</button>
+      <details className="param-tile">
+        <summary>🎽 Composition des packs</summary>
+        <div className="pt-body">
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Choisis une catégorie, coche les articles du pack joueur / gardien. (Articles & tailles → onglet Stock.)</p>
+          <select value={cat} onChange={(e) => setPackCat(e.target.value)}>
+            {draft.categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          {articles.length > 0 && (
+            <div className="pktable">
+              <div className="pkhead"><span>Article</span><span>Joueur</span><span>Gardien</span></div>
+              {articles.map((art) => (
+                <div className="pkrow" key={art}>
+                  <span className="pkname">{art}</span>
+                  <input type="checkbox" checked={(draft.packs[cat] || []).includes(art)} onChange={() => togglePack("packs", art)} />
+                  <input type="checkbox" checked={(draft.packsGardien[cat] || []).includes(art)} onChange={() => togglePack("packsGardien", art)} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ))}
-      <button className="mini" onClick={addCat}>+ Ajouter une catégorie</button>
+      </details>
 
-      <h3 className="sec">Modes de règlement</h3>
-      {draft.reglements.map((c, i) => (
-        <div className="editrow" key={i}>
-          <input value={c} onChange={(e) => setReg(i, e.target.value)} />
-          <button className="x" onClick={() => delReg(i)}>✕</button>
+      <details className="param-tile">
+        <summary>📂 Catégories</summary>
+        <div className="pt-body">
+          {draft.categories.map((c, i) => (
+            <div className="editrow" key={i}>
+              <input value={c} onChange={(e) => setCat(i, e.target.value)} />
+              <button className="x" onClick={() => delCat(i)}>✕</button>
+            </div>
+          ))}
+          <button className="mini" onClick={addCat}>+ Ajouter une catégorie</button>
         </div>
-      ))}
-      <button className="mini" onClick={addReg}>+ Ajouter un mode</button>
+      </details>
 
-      <div style={{ height: 18 }} />
+      <details className="param-tile">
+        <summary>💳 Modes de règlement</summary>
+        <div className="pt-body">
+          {draft.reglements.map((c, i) => (
+            <div className="editrow" key={i}>
+              <input value={c} onChange={(e) => setReg(i, e.target.value)} />
+              <button className="x" onClick={() => delReg(i)}>✕</button>
+            </div>
+          ))}
+          <button className="mini" onClick={addReg}>+ Ajouter un mode</button>
+        </div>
+      </details>
+
       <button className="btn-primary" onClick={() => void enregistrer()}>💾 Enregistrer les paramètres</button>
 
-      <h3 className="sec">Utilisateurs & droits</h3>
-      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Donne un rôle à chaque e-mail (le compte doit exister dans Firebase → Authentication). Les changements s'appliquent tout de suite.</p>
-      {roles && roles.map((r) => (
-        <div className="editrow" key={r.email}>
-          <span style={{ flex: 1, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.email}</span>
-          <select value={r.role} style={{ flex: "none", width: 150 }} onChange={(e) => void setUserRole(r.email, e.target.value as Role)}>
-            {(["admin", "supervision", "user"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
-          </select>
-          <button className="x" onClick={() => { if (confirm("Retirer les droits de " + r.email + " ?")) void removeUserRole(r.email); }}>✕</button>
+      <details className="param-tile">
+        <summary>👥 Utilisateurs & droits</summary>
+        <div className="pt-body">
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Donne un rôle à chaque e-mail (le compte doit exister dans Firebase → Authentication). Appliqué tout de suite.</p>
+          {roles && roles.map((r) => (
+            <div className="editrow" key={r.email}>
+              <span style={{ flex: 1, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.email}</span>
+              <select value={r.role} style={{ flex: "none", width: 150 }} onChange={(e) => void setUserRole(r.email, e.target.value as Role)}>
+                {(["admin", "supervision", "user"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
+              </select>
+              <button className="x" onClick={() => { if (confirm("Retirer les droits de " + r.email + " ?")) void removeUserRole(r.email); }}>✕</button>
+            </div>
+          ))}
+          <div className="editrow">
+            <input placeholder="email@exemple.fr" value={newMail} onChange={(e) => setNewMail(e.target.value)} />
+            <select value={newRole} style={{ flex: "none", width: 150 }} onChange={(e) => setNewRole(e.target.value as Role)}>
+              {(["user", "supervision", "admin"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
+            </select>
+          </div>
+          <button className="mini" onClick={() => { if (newMail.trim()) { void setUserRole(newMail, newRole); setNewMail(""); } }}>+ Ajouter / définir</button>
         </div>
-      ))}
-      <div className="editrow">
-        <input placeholder="email@exemple.fr" value={newMail} onChange={(e) => setNewMail(e.target.value)} />
-        <select value={newRole} style={{ flex: "none", width: 150 }} onChange={(e) => setNewRole(e.target.value as Role)}>
-          {(["user", "supervision", "admin"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
-        </select>
-      </div>
-      <button className="mini" onClick={() => { if (newMail.trim()) { void setUserRole(newMail, newRole); setNewMail(""); } }}>+ Ajouter / définir</button>
+      </details>
       <div style={{ height: 30 }} />
     </div>
   );

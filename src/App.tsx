@@ -5,7 +5,7 @@ import type { Role } from "./types";
 import Login from "./pages/Login";
 import Joueurs from "./pages/Joueurs";
 import FicheJoueur from "./pages/FicheJoueur";
-import Cheques from "./pages/Cheques";
+import TableauBord from "./pages/TableauBord";
 import Stock from "./pages/Stock";
 import Parametres from "./pages/Parametres";
 import Inscription from "./pages/Inscription";
@@ -30,7 +30,7 @@ function Layout({ role }: { role: Role }) {
 
       <nav className="tabbar">
         <NavLink to="/" end><span className="ico">📋</span>Joueurs</NavLink>
-        {role !== "user" && <NavLink to="/cheques"><span className="ico">💰</span>Chèques</NavLink>}
+        {role !== "user" && <NavLink to="/dashboard"><span className="ico">📊</span>Tableau</NavLink>}
         <NavLink to="/stock"><span className="ico">📦</span>Stock</NavLink>
         {role === "admin" && <NavLink to="/parametres"><span className="ico">⚙️</span>Réglages</NavLink>}
       </nav>
@@ -50,7 +50,7 @@ function AuthedApp() {
         <Route index element={<Joueurs role={role} />} />
         <Route path="joueur/:id" element={<FicheJoueur />} />
         <Route path="preinscriptions" element={<Preinscriptions />} />
-        {role !== "user" && <Route path="cheques" element={<Cheques />} />}
+        {role !== "user" && <Route path="dashboard" element={<TableauBord />} />}
         <Route path="stock" element={<Stock />} />
         {role === "admin" && <Route path="parametres" element={<Parametres />} />}
         <Route path="*" element={<Navigate to="/" replace />} />

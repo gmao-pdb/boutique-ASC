@@ -110,6 +110,7 @@ input, select, textarea {
 /* Carte joueur */
 .joueur-card { background: var(--card); border: 1px solid var(--bord); border-radius: 12px; padding: 12px 14px; margin-bottom: 9px; display: flex; align-items: center; gap: 10px; }
 .joueur-card.torecover { box-shadow: inset 4px 0 0 var(--rouge); }
+.joueur-card.toprep { box-shadow: inset 4px 0 0 var(--orange); }
 .jc-main { flex: 1; min-width: 0; }
 .jc-cat { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
 .jc-nom { font-size: 16px; margin: 1px 0 5px; }
@@ -233,6 +234,17 @@ input, select, textarea {
 .editrow input { flex: 1; }
 .editrow input.w90 { flex: none; width: 90px; text-align: right; }
 .editrow .unit { color: var(--muted); font-weight: 600; }
+
+/* Tuiles dépliables (Paramètres / Tableau de bord) */
+.param-tile { background: var(--card); border: 1px solid var(--bord); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.param-tile > summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: space-between; }
+.param-tile > summary::-webkit-details-marker { display: none; }
+.param-tile > summary::after { content: "⌄"; color: var(--muted); font-size: 18px; transition: transform .2s; }
+.param-tile[open] > summary::after { transform: rotate(180deg); }
+.pt-body { padding: 0 16px 16px; }
+.dash-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bord); font-size: 14px; }
+.dash-line:last-child { border-bottom: none; }
+.dash-line b { font-variant-numeric: tabular-nums; }
 
 /* Grille des gabarits */
 .grid-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0; }

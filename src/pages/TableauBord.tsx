@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useConfig, useJoueurs, useStock } from "../data";
-import { calc, euro, chequeCount } from "../calc";
+import { useConfig, useJoueurs, useStock, useCommandes } from "../data";
+import { calc, euro, chequeCount, besoinsCommande } from "../calc";
 import Cheques from "./Cheques";
 import type { Joueur } from "../types";
 
@@ -16,6 +16,7 @@ export default function TableauBord() {
   const cfg = useConfig();
   const joueurs = useJoueurs();
   const stock = useStock();
+  const commandes = useCommandes();
   const nav = useNavigate();
 
   const d = useMemo(() => {
@@ -39,11 +40,11 @@ export default function TableauBord() {
         if (df > 0) { incomplets++; partiels.push(p); }
       });
     }
-    const geres = new Set((cfg?.catalogue || []).filter((c) => c.gererStock).map((c) => c.nom));
     const stockDispo = (stock || []).reduce((s, it) => s + (it.quantite || 0), 0);
-    const aCommander = (stock || []).filter((it) => geres.has(it.article) && it.quantite <= 0).length;
+    // même calcul que la page Stock → Commandes (différés + seuils − stock − déjà commandé)
+    const aCommander = cfg && joueurs ? besoinsCommande(cfg, joueurs, stock || [], commandes || []).reduce((s, b) => s + b.manque, 0) : 0;
     return { fin, parMoyen: [...parMoyen.entries()], remis, differe, complets, incomplets, partiels, stockDispo, aCommander };
-  }, [cfg, joueurs, stock]);
+  }, [cfg, joueurs, stock, commandes]);
 
   if (!cfg || !joueurs || !stock) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 

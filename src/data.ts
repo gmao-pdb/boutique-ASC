@@ -3,6 +3,7 @@ import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, getD
 import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { db, app } from "./firebase";
+import { stockId } from "./calc";
 import { DEFAULT_CONFIG } from "./defaultConfig";
 import type { Config, Joueur, StockItem, Preinscription, Role, Commande, Inventaire } from "./types";
 
@@ -63,7 +64,7 @@ export async function annulerSuppression(id: string) {
 }
 
 /* ---------- Stock ---------- */
-export const stockId = (article: string, taille: string) => (article + "__" + taille).replace(/\//g, "-");
+export { stockId } from "./calc";
 
 export function useStock(): StockItem[] | null {
   const [stock, setStock] = useState<StockItem[] | null>(null);

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useConfig, useJoueurs, useStock, useCommandes, setStockItem, enregistrerInventaire, useInventaires, deleteInventaire, stockId, patchConfig, addCommande, updateCommande, deleteCommande, adjustStock } from "../data";
+import { besoinsCommande } from "../calc";
 import { COMMANDE_LABEL, type CatalogueItem, type Commande, type CommandeLigne, type StockItem } from "../types";
 
 const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); const d = new Date(); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
@@ -35,16 +36,6 @@ export default function Stock() {
     return m;
   }, [commandes]);
 
-  // Besoin (articles différés des joueurs), par article+taille
-  const besoin = useMemo(() => {
-    const m = new Map<string, number>();
-    (joueurs || []).forEach((j) => (j.articles || []).forEach((a) => {
-      if (a.statut === "remis" || !a.taille) return;
-      m.set(key2(a.article, a.taille), (m.get(key2(a.article, a.taille)) || 0) + 1);
-    }));
-    return m;
-  }, [joueurs]);
-
   // Tout ce qui est différé (non remis), regroupé par article + taille
   const manquants = useMemo(() => {
     const map = new Map<string, { article: string; taille: string; qte: number; qui: string[] }>();
@@ -62,15 +53,8 @@ export default function Stock() {
 
   if (!cfg || !joueurs || !stock || !commandes) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
-  /* ----- suggestions à commander (articles gérés) ----- */
-  const suggestions = cfg.catalogue.flatMap((art) => (art.gererStock ? art.tailles.map((t) => {
-    const k = key2(art.nom, t);
-    const s = stockMap.get(stockId(art.nom, t));
-    const dispo = s?.quantite ?? 0, seuil = s?.seuilMini ?? 0;
-    const bes = besoin.get(k) || 0, cmd = enCommande.get(k) || 0;
-    const manque = Math.max(0, bes + seuil - dispo - cmd);
-    return { article: art.nom, taille: t, key: k, dispo, seuil, bes, cmd, manque };
-  }).filter((x) => x.manque > 0) : []));
+  /* ----- suggestions à commander : différés des joueurs + réassort des seuils mini ----- */
+  const suggestions = besoinsCommande(cfg, joueurs, stock, commandes);
 
   const creerCommande = async () => {
     const lignes: CommandeLigne[] = suggestions
@@ -129,7 +113,7 @@ export default function Stock() {
       {vue === "commandes" && (
         <>
           <h3 className="sec">À commander ({suggestions.length})</h3>
-          {suggestions.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à commander — stock suffisant. 👍 (Active « gérer le stock » sur un article pour l'inclure.)</div>}
+          {suggestions.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à commander : aucun article différé chez les joueurs, stock et commandes en cours couvrent tout. 👍</div>}
           {suggestions.map((s) => (
             <div className="manq" key={s.key}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>

@@ -1,9 +1,14 @@
-// Config du Worker boutiqueasc : site statique (dist/) servi en mode SPA.
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "boutiqueasc",
   "compatibility_date": "2026-07-01",
+  "observability": {
+    "enabled": true
+  },
   "assets": {
-    "directory": "./dist",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
 }

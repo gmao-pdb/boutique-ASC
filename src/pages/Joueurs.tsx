@@ -29,6 +29,8 @@ export default function Joueurs({ role }: { role: Role }) {
   const [q, setQ] = useState("");
   const [selCats, setSelCats] = useState<Set<string>>(new Set());
   const [eqp, setEqp] = useState("");
+  const [supprOnly, setSupprOnly] = useState(false);
+  const pending = (joueurs || []).filter((p) => p.supprDemandee).length;
 
   const toggleCat = (c: string) =>
     setSelCats((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
@@ -39,6 +41,7 @@ export default function Joueurs({ role }: { role: Role }) {
     const ql = q.trim().toLowerCase();
     const list = joueurs
       .filter((p) => {
+        if (supprOnly && !p.supprDemandee) return false;
         if (selCats.size > 0 && !selCats.has(p.categorie)) return false;
         const pk = packInfo(p);
         if (eqp === "apreparer" && !pk.partiel) return false;
@@ -50,7 +53,7 @@ export default function Joueurs({ role }: { role: Role }) {
       .sort((a, b) => (a.p.nom || "").localeCompare(b.p.nom || ""));
     list.forEach(({ pk }) => { if (pk.complet) k.complets++; if (pk.partiel) { k.apreparer++; k.articles += pk.differe; } });
     return { rows: list, kpi: k };
-  }, [config, joueurs, q, selCats, eqp]);
+  }, [config, joueurs, q, selCats, eqp, supprOnly]);
 
   if (!config || !joueurs) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
@@ -67,6 +70,11 @@ export default function Joueurs({ role }: { role: Role }) {
       {preinsc && preinsc.length > 0 && (
         <button className="preinsc-banner" onClick={() => nav("/preinscriptions")}>
           📥 {preinsc.length} pré-inscription{preinsc.length > 1 ? "s" : ""} à valider →
+        </button>
+      )}
+      {showMoney && pending > 0 && (
+        <button className={"preinsc-banner suppr" + (supprOnly ? " on" : "")} onClick={() => setSupprOnly(!supprOnly)}>
+          🗑️ {pending} suppression{pending > 1 ? "s" : ""} à valider {supprOnly ? "— tout afficher" : "→"}
         </button>
       )}
 

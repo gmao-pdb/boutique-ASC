@@ -94,6 +94,8 @@ input, select, textarea {
 .search { margin-bottom: 10px; }
 
 .preinsc-banner { width: 100%; margin-bottom: 12px; padding: 12px 14px; border: none; border-radius: 10px; background: #fff3e0; color: var(--orange); font-weight: 800; font-size: 14px; text-align: left; }
+.preinsc-banner.suppr { background: #fdeaea; color: var(--rouge); }
+.preinsc-banner.suppr.on { background: var(--rouge); color: #fff; }
 
 /* Page publique d'inscription */
 .ins-art { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--bord); }

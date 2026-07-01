@@ -20,7 +20,8 @@ export interface PackArticle {
 
 export interface Cheque {
   montant?: number;
-  datePrev: string;
+  dateRecup?: string; // date de récupération (chèque en main)
+  datePrev: string;   // date d'encaissement prévu
   recup: boolean;
   enc: boolean;
 }

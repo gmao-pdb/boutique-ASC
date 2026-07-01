@@ -7,6 +7,8 @@ import {
 } from "../calc";
 import { type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config } from "../types";
 
+const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); const d = new Date(); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
+
 function blankJoueur(cfg: Config): Joueur {
   return {
     id: "", categorie: cfg.categories[0] || "", gardien: false, licence: "",
@@ -252,12 +254,13 @@ export default function FicheJoueur() {
         <div className="paybox">
           {draft.cheques.map((ch, i) => (
             <div key={i} className="chq">
-              <label className="check"><input type="checkbox" checked={ch.recup} onChange={(e) => setCheque(i, { recup: e.target.checked })} /> Chèque {i + 1} récupéré</label>
+              <label className="check"><input type="checkbox" checked={ch.recup} onChange={(e) => setCheque(i, { recup: e.target.checked, dateRecup: e.target.checked && !ch.dateRecup ? todayIso() : ch.dateRecup })} /> Chèque {i + 1} récupéré</label>
               <div className="chq-l2">
-                <span className="dt">Prévu <input type="date" value={ch.datePrev} onChange={(e) => setCheque(i, { datePrev: e.target.value })} /></span>
+                <span className="dt">Récup. <input type="date" value={ch.dateRecup || ""} onChange={(e) => setCheque(i, { dateRecup: e.target.value })} /></span>
+                <span className="dt">Encaiss. prévu <input type="date" value={ch.datePrev} onChange={(e) => setCheque(i, { datePrev: e.target.value })} /></span>
                 <span className="mt"><input type="number" value={chequeAmt(ch, c.total, n)} onChange={(e) => setCheque(i, { montant: Math.max(0, Math.round(+e.target.value || 0)) })} /> €</span>
                 <button className="mini" onClick={() => equilibrer(i)}>=</button>
-                <label className="check"><input type="checkbox" checked={ch.enc} onChange={(e) => setCheque(i, { enc: e.target.checked })} /> encaissé</label>
+                {ch.enc ? <span className="badge ok">✅ encaissé</span> : <span className="badge neutre">non encaissé</span>}
               </div>
             </div>
           ))}

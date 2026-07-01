@@ -41,7 +41,7 @@ export default function Cheques() {
   };
 
   const { items, resume } = useMemo(() => {
-    type Item = { j: Joueur; idx: number; montant: number; datePrev: string; recup: boolean; enc: boolean; ecart: number; n: number };
+    type Item = { j: Joueur; idx: number; montant: number; dateRecup: string; datePrev: string; recup: boolean; enc: boolean; ecart: number; n: number };
     const out: Item[] = [];
     if (!cfg || !joueurs) return { items: out, resume: { nb: 0, montant: 0, retard: 0 } };
     joueurs.forEach((j) => {
@@ -51,7 +51,7 @@ export default function Cheques() {
       const somme = j.cheques.reduce((s, ch) => s + chequeAmt(ch, total, n), 0);
       const ecart = total - somme;
       j.cheques.forEach((ch, idx) =>
-        out.push({ j, idx, montant: chequeAmt(ch, total, n), datePrev: ch.datePrev || "", recup: !!ch.recup, enc: !!ch.enc, ecart, n })
+        out.push({ j, idx, montant: chequeAmt(ch, total, n), dateRecup: ch.dateRecup || "", datePrev: ch.datePrev || "", recup: !!ch.recup, enc: !!ch.enc, ecart, n })
       );
     });
     const aenc = out.filter((it) => !it.enc);
@@ -97,12 +97,13 @@ export default function Cheques() {
               {it.ecart !== 0 && <span className="badge no" style={{ marginLeft: 6 }}>⚠️ écart {euro(it.ecart)}</span>}
             </div>
             <div className="cc-row">
+              <span className="dt">Récup. <input type="date" value={it.dateRecup} onChange={(e) => patchCheque(it.j, it.idx, { dateRecup: e.target.value })} /></span>
               <span className="dt">Dépôt <input type="date" value={it.datePrev} onChange={(e) => patchCheque(it.j, it.idx, { datePrev: e.target.value })} />{late && <span className="late-b"> RETARD</span>}</span>
-              <span className="mt"><input type="number" value={it.montant} onChange={(e) => setMontant(it.j, it.idx, +e.target.value)} /> €</span>
-              <button className="mini" onClick={() => equilibrer(it.j, it.idx)} title="= total − les autres">=</button>
             </div>
             <div className="cc-row">
-              <label className="check"><input type="checkbox" checked={it.recup} onChange={(e) => patchCheque(it.j, it.idx, { recup: e.target.checked })} /> Récupéré</label>
+              <span className="mt"><input type="number" value={it.montant} onChange={(e) => setMontant(it.j, it.idx, +e.target.value)} /> €</span>
+              <button className="mini" onClick={() => equilibrer(it.j, it.idx)} title="= total − les autres">=</button>
+              <label className="check"><input type="checkbox" checked={it.recup} onChange={(e) => patchCheque(it.j, it.idx, { recup: e.target.checked, dateRecup: e.target.checked && !it.dateRecup ? today : it.dateRecup })} /> Récupéré</label>
               <label className="check"><input type="checkbox" checked={it.enc} onChange={(e) => patchCheque(it.j, it.idx, { enc: e.target.checked })} /> Encaissé</label>
             </div>
           </div>

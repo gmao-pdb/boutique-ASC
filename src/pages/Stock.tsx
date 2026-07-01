@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useConfig, useJoueurs, useStock, useCommandes, setStockItem, enregistrerInventaire, stockId, patchConfig, addCommande, updateCommande, deleteCommande, adjustStock } from "../data";
+import { useConfig, useJoueurs, useStock, useCommandes, setStockItem, enregistrerInventaire, useInventaires, deleteInventaire, stockId, patchConfig, addCommande, updateCommande, deleteCommande, adjustStock } from "../data";
 import { COMMANDE_LABEL, type CatalogueItem, type Commande, type CommandeLigne, type StockItem } from "../types";
 
 const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); const d = new Date(); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
@@ -10,6 +10,7 @@ export default function Stock() {
   const joueurs = useJoueurs();
   const stock = useStock();
   const commandes = useCommandes();
+  const inventaires = useInventaires();
   const [vue, setVue] = useState<"manquants" | "articles" | "commandes">("articles");
   const [alertesSeules, setAlertesSeules] = useState(false);
   const [newSize, setNewSize] = useState<Record<string, string>>({});
@@ -268,6 +269,33 @@ export default function Stock() {
               <input placeholder="Nouvel article" value={newArt} onChange={(e) => setNewArt(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") ajouterArticle(); }} />
               <button className="btn-primary" style={{ width: "auto", marginTop: 0, padding: "11px 16px" }} onClick={ajouterArticle}>+ Ajouter</button>
             </div>
+
+            {(inventaires || []).length > 0 && (
+              <>
+                <h3 className="sec">Inventaires enregistrés</h3>
+                {[...(inventaires || [])].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((inv) => (
+                  <details key={inv.id} className="art-acc">
+                    <summary>
+                      <span className="aa-name">🗒️ {new Date(inv.date).toLocaleDateString("fr-FR")} <span className="muted">{new Date(inv.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span></span>
+                      <span className="aa-meta">{inv.lignes.length} réf. · {inv.lignes.reduce((s, l) => s + l.quantite, 0)} unités</span>
+                    </summary>
+                    <div className="aa-body">
+                      <table className="stk">
+                        <thead><tr><th>Article</th><th>Taille</th><th>Quantité</th></tr></thead>
+                        <tbody>
+                          {[...inv.lignes].sort((a, b) => a.article.localeCompare(b.article) || a.taille.localeCompare(b.taille)).map((l, i) => (
+                            <tr key={i}><td>{l.article}</td><td className="stk-t">{l.taille}</td><td>{l.quantite}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="aa-foot">
+                        <button className="lnk-danger" onClick={() => { if (confirm("Supprimer cet inventaire ?")) void deleteInventaire(inv.id); }}>Supprimer</button>
+                      </div>
+                    </div>
+                  </details>
+                ))}
+              </>
+            )}
           </>
         );
       })()}

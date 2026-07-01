@@ -4,10 +4,6 @@ export type Licence = "" | "NOUVEAU" | "RENOUV." | "LICENCE";
 
 // Remise d'un article : remis ou différé (le reste — à commander / récupérer — se gère dans le Stock)
 export type ArticleStatut = "remis" | "differe";
-export const STATUT_LABEL: Record<ArticleStatut, string> = {
-  remis: "✅ Remis",
-  differe: "⏳ Différé",
-};
 
 export type Role = "admin" | "supervision" | "user";
 
@@ -42,25 +38,15 @@ export interface Joueur {
   regOk: boolean;
   regDate: string;
   commentaires: string;
-  gabarit?: string; // gabarit de taille choisi
   supprDemandee?: boolean; // suppression demandée (à valider par un superviseur)
   supprPar?: string;
   supprLe?: number;
-  test?: boolean; // joueur de test (pour purge)
   createdAt?: number;
   updatedAt?: number;
 }
 
 export interface Remise { nom: string; montant: number; }
 export interface CatalogueItem { nom: string; tailles: string[]; gererStock?: boolean }
-
-// Gabarit = une ligne de la grille de correspondance des tailles.
-// valeurs : pour chaque système (colonne), la taille équivalente.
-export interface Gabarit {
-  label: string;
-  ageMax: number | null; // âge max pour l'auto-sélection (null = adulte / pas d'âge)
-  valeurs: Record<string, string>;
-}
 
 export interface Config {
   saison: string;
@@ -72,8 +58,6 @@ export interface Config {
   catalogue: CatalogueItem[];
   packs: Record<string, string[]>;
   packsGardien: Record<string, string[]>;
-  systemes: string[]; // colonnes de la grille, ex. Âge / Tranche / Lettre / Combiné / Unique
-  gabarits: Gabarit[];
 }
 
 // Pré-inscription déposée par la personne via le QR (formulaire public)
@@ -114,4 +98,11 @@ export interface StockItem {
   taille: string;
   quantite: number;
   seuilMini: number;
+}
+
+// Inventaire : photo datée des quantités en stock
+export interface Inventaire {
+  id: string;
+  date: string; // ISO
+  lignes: { article: string; taille: string; quantite: number }[];
 }

@@ -4,7 +4,7 @@ import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { db, app } from "./firebase";
 import { DEFAULT_CONFIG } from "./defaultConfig";
-import type { Config, Joueur, StockItem, Preinscription, Role, Commande } from "./types";
+import type { Config, Joueur, StockItem, Preinscription, Role, Commande, Inventaire } from "./types";
 
 const configRef = doc(db, "config", "main");
 
@@ -13,10 +13,9 @@ export function useConfig(): Config | null {
   useEffect(() => {
     return onSnapshot(configRef, (snap) => {
       if (snap.exists()) {
-        const c = snap.data() as Config;
-        // complète les champs ajoutés après coup (config déjà en base)
-        if (!c.systemes || !c.systemes.length) c.systemes = DEFAULT_CONFIG.systemes;
-        if (!c.gabarits || !c.gabarits.length) c.gabarits = DEFAULT_CONFIG.gabarits;
+        const c = snap.data() as Config & { systemes?: unknown; gabarits?: unknown };
+        // champs hérités (grille de tailles abandonnée) : retirés — la prochaine sauvegarde des réglages purge le document
+        delete c.systemes; delete c.gabarits;
         // assure la présence du mode "2 CHEQUES" (ajouté après coup)
         if (c.reglements && !c.reglements.includes("2 CHEQUES")) {
           const i = c.reglements.indexOf("1 CHEQUE");
@@ -81,6 +80,18 @@ export async function setStockItem(article: string, taille: string, patch: Parti
 }
 export async function enregistrerInventaire(lignes: { article: string; taille: string; quantite: number }[]) {
   await addDoc(collection(db, "inventaires"), { date: new Date().toISOString(), lignes });
+}
+export function useInventaires(): Inventaire[] | null {
+  const [list, setList] = useState<Inventaire[] | null>(null);
+  useEffect(() => {
+    return onSnapshot(collection(db, "inventaires"), (snap) => {
+      setList(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Inventaire, "id">) })));
+    });
+  }, []);
+  return list;
+}
+export async function deleteInventaire(id: string) {
+  await deleteDoc(doc(db, "inventaires", id));
 }
 
 /* ---------- Pré-inscriptions (formulaire public via QR) ---------- */

@@ -1,4 +1,4 @@
-import type { Joueur, Config, Cheque, Gabarit } from "./types";
+import type { Joueur, Config, Cheque } from "./types";
 
 /* ---------- Chèques ---------- */
 export function chequeCount(m: string): number {
@@ -143,28 +143,6 @@ export function tailleAuto(cfg: Config, article: string, age: number | null): st
     return elig[elig.length - 1] || "";
   }
   return defaultSize(cfg, article, age);
-}
-
-/* ---------- Gabarits (grille de correspondance des tailles) ---------- */
-// Pour un article et un gabarit : 1ère équivalence (dans l'ordre des systèmes) présente dans les tailles de l'article.
-export function tailleGabarit(cfg: Config, article: string, gab: Gabarit): string {
-  const art = cfg.catalogue.find((c) => c.nom === article);
-  if (!art) return "";
-  for (const sys of cfg.systemes || []) {
-    const v = gab.valeurs[sys];
-    if (v && art.tailles.includes(v)) return v;
-  }
-  return "";
-}
-export function gabaritParLabel(cfg: Config, label: string): Gabarit | null {
-  return (cfg.gabarits || []).find((g) => g.label === label) || null;
-}
-export function gabaritPourAge(cfg: Config, age: number | null): Gabarit | null {
-  const list = cfg.gabarits || [];
-  if (age == null) return null;
-  const avecAge = list.filter((g) => g.ageMax != null).sort((a, b) => (a.ageMax as number) - (b.ageMax as number));
-  for (const g of avecAge) if (age <= (g.ageMax as number)) return g;
-  return list.find((g) => g.ageMax == null) || null;
 }
 
 /* ---------- Dates de chèques par défaut ---------- */

@@ -250,12 +250,3 @@ input, select, textarea {
 .dash-line:last-child { border-bottom: none; }
 .dash-line b { font-variant-numeric: tabular-nums; }
 
-/* Grille des gabarits */
-.grid-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0; }
-.gtable { border-collapse: collapse; }
-.gtable th, .gtable td { border: 1px solid var(--bord); padding: 3px; white-space: nowrap; }
-.gtable th { background: var(--noir); color: #fff; font-size: 11px; font-weight: 700; padding: 6px; }
-.gtable th .x { color: #fff; }
-.gtable input { width: 72px; padding: 6px; font-size: 13px; }
-.gtable input.w50 { width: 48px; text-align: center; }
-.gtable input.w70 { width: 72px; }

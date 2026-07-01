@@ -4,7 +4,7 @@ import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { db, app } from "./firebase";
 import { DEFAULT_CONFIG } from "./defaultConfig";
-import type { Config, Joueur, StockItem, Preinscription, Role } from "./types";
+import type { Config, Joueur, StockItem, Preinscription, Role, Commande } from "./types";
 
 const configRef = doc(db, "config", "main");
 
@@ -136,6 +136,26 @@ export async function creerCompte(email: string, password: string, role: Role) {
   } finally {
     await deleteApp(secondary);
   }
+}
+
+/* ---------- Commandes fournisseur ---------- */
+export function useCommandes(): Commande[] | null {
+  const [list, setList] = useState<Commande[] | null>(null);
+  useEffect(() => {
+    return onSnapshot(collection(db, "commandes"), (snap) => {
+      setList(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Commande, "id">) })));
+    });
+  }, []);
+  return list;
+}
+export async function addCommande(c: Omit<Commande, "id">) {
+  return addDoc(collection(db, "commandes"), { ...c, dateCreation: Date.now() });
+}
+export async function updateCommande(id: string, patch: Partial<Commande>) {
+  await updateDoc(doc(db, "commandes", id), patch as Record<string, unknown>);
+}
+export async function deleteCommande(id: string) {
+  await deleteDoc(doc(db, "commandes", id));
 }
 
 /* ---------- Ajustement du stock (à la remise) ---------- */

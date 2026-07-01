@@ -1,22 +1,48 @@
 import { useMemo, useState } from "react";
-import { useConfig, useJoueurs, useStock, setStockItem, enregistrerInventaire, stockId, patchConfig } from "../data";
-import { type CatalogueItem, type StockItem } from "../types";
+import { useConfig, useJoueurs, useStock, useCommandes, setStockItem, enregistrerInventaire, stockId, patchConfig, addCommande, updateCommande, deleteCommande, adjustStock } from "../data";
+import { COMMANDE_LABEL, type CatalogueItem, type Commande, type CommandeLigne, type StockItem } from "../types";
+
+const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); const d = new Date(); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
+const key2 = (a: string, t: string) => a + "__" + t;
 
 export default function Stock() {
   const cfg = useConfig();
   const joueurs = useJoueurs();
   const stock = useStock();
-  const [vue, setVue] = useState<"manquants" | "articles">("articles");
+  const commandes = useCommandes();
+  const [vue, setVue] = useState<"manquants" | "articles" | "commandes">("articles");
   const [alertesSeules, setAlertesSeules] = useState(false);
   const [newSize, setNewSize] = useState<Record<string, string>>({});
   const [newArt, setNewArt] = useState("");
   const [artQ, setArtQ] = useState("");
+  const [sugQty, setSugQty] = useState<Record<string, number>>({});
+  const [fournisseur, setFournisseur] = useState("");
 
   const stockMap = useMemo(() => {
     const m = new Map<string, StockItem>();
     (stock || []).forEach((s) => m.set(s.id, s));
     return m;
   }, [stock]);
+
+  // Quantités déjà en commande (à passer + en cours), par article+taille
+  const enCommande = useMemo(() => {
+    const m = new Map<string, number>();
+    (commandes || []).forEach((c) => {
+      if (c.statut === "recue") return;
+      c.lignes.forEach((l) => m.set(key2(l.article, l.taille), (m.get(key2(l.article, l.taille)) || 0) + l.quantite));
+    });
+    return m;
+  }, [commandes]);
+
+  // Besoin (articles différés des joueurs), par article+taille
+  const besoin = useMemo(() => {
+    const m = new Map<string, number>();
+    (joueurs || []).forEach((j) => (j.articles || []).forEach((a) => {
+      if (a.statut === "remis" || !a.taille) return;
+      m.set(key2(a.article, a.taille), (m.get(key2(a.article, a.taille)) || 0) + 1);
+    }));
+    return m;
+  }, [joueurs]);
 
   // Tout ce qui est différé (non remis), regroupé par article + taille
   const manquants = useMemo(() => {
@@ -33,7 +59,34 @@ export default function Stock() {
     return [...map.values()].sort((a, b) => a.article.localeCompare(b.article));
   }, [joueurs]);
 
-  if (!cfg || !joueurs || !stock) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
+  if (!cfg || !joueurs || !stock || !commandes) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
+
+  /* ----- suggestions à commander (articles gérés) ----- */
+  const suggestions = cfg.catalogue.flatMap((art) => (art.gererStock ? art.tailles.map((t) => {
+    const k = key2(art.nom, t);
+    const s = stockMap.get(stockId(art.nom, t));
+    const dispo = s?.quantite ?? 0, seuil = s?.seuilMini ?? 0;
+    const bes = besoin.get(k) || 0, cmd = enCommande.get(k) || 0;
+    const manque = Math.max(0, bes + seuil - dispo - cmd);
+    return { article: art.nom, taille: t, key: k, dispo, seuil, bes, cmd, manque };
+  }).filter((x) => x.manque > 0) : []));
+
+  const creerCommande = async () => {
+    const lignes: CommandeLigne[] = suggestions
+      .map((s) => ({ article: s.article, taille: s.taille, quantite: sugQty[s.key] ?? s.manque }))
+      .filter((l) => l.quantite > 0);
+    if (!lignes.length) { alert("Rien à commander."); return; }
+    await addCommande({ statut: "apasser", lignes, fournisseur: fournisseur.trim() || undefined });
+    setSugQty({}); setFournisseur("");
+    alert("Commande créée (à passer) ✔");
+  };
+  const marquerCommandee = (c: Commande) => void updateCommande(c.id, { statut: "encours", dateCommande: todayIso() });
+  const receptionner = async (c: Commande) => {
+    if (!confirm("Valider la réception ? Le stock sera incrémenté.")) return;
+    for (const l of c.lignes) await adjustStock(l.article, l.taille, l.quantite);
+    await updateCommande(c.id, { statut: "recue", dateReception: todayIso() });
+    alert("Réception validée, stock mis à jour ✔");
+  };
 
   /* ----- gestion du catalogue (articles + tailles) ----- */
   const saveCatalogue = (next: CatalogueItem[]) => void patchConfig({ catalogue: next });
@@ -68,19 +121,69 @@ export default function Stock() {
     <>
       <div className="chips">
         <button className={"chip" + (vue === "articles" ? " on" : "")} onClick={() => setVue("articles")}>📦 Articles & stock</button>
-        <button className={"chip" + (vue === "manquants" ? " on" : "")} onClick={() => setVue("manquants")}>🛒 Manquants</button>
+        <button className={"chip" + (vue === "commandes" ? " on" : "")} onClick={() => setVue("commandes")}>🛒 Commandes</button>
+        <button className={"chip" + (vue === "manquants" ? " on" : "")} onClick={() => setVue("manquants")}>📋 Manquants</button>
       </div>
+
+      {vue === "commandes" && (
+        <>
+          <h3 className="sec">À commander ({suggestions.length})</h3>
+          {suggestions.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à commander — stock suffisant. 👍 (Active « gérer le stock » sur un article pour l'inclure.)</div>}
+          {suggestions.map((s) => (
+            <div className="manq" key={s.key}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span><b>{s.article}</b> <span className="muted">({s.taille})</span></span>
+                <span className="stepper">
+                  <button onClick={() => setSugQty({ ...sugQty, [s.key]: Math.max(0, (sugQty[s.key] ?? s.manque) - 1) })}>−</button>
+                  <input type="number" value={sugQty[s.key] ?? s.manque} onChange={(e) => setSugQty({ ...sugQty, [s.key]: Math.max(0, Math.round(+e.target.value || 0)) })} />
+                  <button onClick={() => setSugQty({ ...sugQty, [s.key]: (sugQty[s.key] ?? s.manque) + 1 })}>+</button>
+                </span>
+              </div>
+              <div className="muted" style={{ fontSize: 12 }}>besoin {s.bes} · stock {s.dispo} · déjà commandé {s.cmd} · seuil {s.seuil}</div>
+            </div>
+          ))}
+          {suggestions.length > 0 && (
+            <div className="addrow" style={{ marginTop: 10 }}>
+              <input placeholder="Fournisseur (optionnel)" value={fournisseur} onChange={(e) => setFournisseur(e.target.value)} />
+              <button className="btn-primary" style={{ width: "auto", marginTop: 0, padding: "11px 16px" }} onClick={() => void creerCommande()}>Créer la commande</button>
+            </div>
+          )}
+
+          <h3 className="sec">Commandes</h3>
+          {commandes.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Aucune commande.</div>}
+          {[...commandes].sort((a, b) => (b.dateCreation || 0) - (a.dateCreation || 0)).map((c) => (
+            <div className="card" key={c.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className={"badge " + (c.statut === "recue" ? "ok" : c.statut === "encours" ? "part" : "no")}>{COMMANDE_LABEL[c.statut]}</span>
+                {c.fournisseur && <span className="muted" style={{ fontSize: 12 }}>{c.fournisseur}</span>}
+              </div>
+              <div style={{ fontSize: 13, margin: "6px 0" }}>{c.lignes.map((l) => l.quantite + "× " + l.article + " (" + l.taille + ")").join(" · ")}</div>
+              {(c.dateCommande || c.dateReception) && <div className="muted" style={{ fontSize: 11 }}>{c.dateCommande ? "commandée le " + c.dateCommande : ""}{c.dateReception ? " · reçue le " + c.dateReception : ""}</div>}
+              <div className="aa-foot" style={{ marginTop: 8 }}>
+                {c.statut === "apasser" && <button className="mini" onClick={() => marquerCommandee(c)}>🚚 Marquer commandée</button>}
+                {c.statut === "encours" && <button className="btn-primary" style={{ width: "auto", marginTop: 0, padding: "9px 14px", flex: 1 }} onClick={() => void receptionner(c)}>✅ Valider réception (+ stock)</button>}
+                <button className="lnk-danger" onClick={() => { if (confirm("Supprimer cette commande ?")) void deleteCommande(c.id); }}>Supprimer</button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
 
       {vue === "manquants" && (
         <>
           <h3 className="sec">À fournir / différés ({manquants.reduce((s, e) => s + e.qte, 0)})</h3>
           {manquants.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à fournir. 👍</div>}
-          {manquants.map((e) => (
-            <div key={e.article + e.taille} className="manq">
-              <div><b>{e.qte}×</b> {e.article} <span className="muted">({e.taille})</span></div>
-              <div className="muted" style={{ fontSize: 12 }}>{e.qui.join(", ")}</div>
-            </div>
-          ))}
+          {manquants.map((e) => {
+            const cmd = enCommande.get(key2(e.article, e.taille)) || 0;
+            return (
+              <div key={e.article + e.taille} className="manq">
+                <div><b>{e.qte}×</b> {e.article} <span className="muted">({e.taille})</span>
+                  {cmd > 0 ? <span className="badge part" style={{ marginLeft: 6 }}>🚚 {cmd} commandé(s)</span> : <span className="badge no" style={{ marginLeft: 6 }}>à commander</span>}
+                </div>
+                <div className="muted" style={{ fontSize: 12 }}>{e.qui.join(", ")}</div>
+              </div>
+            );
+          })}
         </>
       )}
 

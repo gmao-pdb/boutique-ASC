@@ -85,6 +85,24 @@ export interface Preinscription {
   createdAt?: number;
 }
 
+// Commandes fournisseur
+export type CommandeStatut = "apasser" | "encours" | "recue";
+export const COMMANDE_LABEL: Record<CommandeStatut, string> = {
+  apasser: "🛒 À passer",
+  encours: "🚚 Commandée",
+  recue: "✅ Reçue",
+};
+export interface CommandeLigne { article: string; taille: string; quantite: number }
+export interface Commande {
+  id: string;
+  statut: CommandeStatut;
+  lignes: CommandeLigne[];
+  fournisseur?: string;
+  dateCreation?: number;
+  dateCommande?: string;
+  dateReception?: string;
+}
+
 // Stock : une entrée par article + taille
 export interface StockItem {
   id: string; // `${article}__${taille}`

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs } from "firebase/firestore";
-import { db } from "./firebase";
+import { initializeApp, deleteApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { db, app } from "./firebase";
 import { DEFAULT_CONFIG } from "./defaultConfig";
 import type { Config, Joueur, StockItem, Preinscription, Role } from "./types";
 
@@ -123,6 +125,17 @@ export async function setUserRole(email: string, role: Role) {
 }
 export async function removeUserRole(email: string) {
   await deleteDoc(doc(db, "roles", email.toLowerCase().trim()));
+}
+// Crée un compte Firebase Auth sans déconnecter l'admin (2ᵉ instance) + attribue le rôle.
+export async function creerCompte(email: string, password: string, role: Role) {
+  const secondary = initializeApp(app.options, "secondaire-" + Date.now());
+  try {
+    await createUserWithEmailAndPassword(getAuth(secondary), email.trim(), password);
+    await signOut(getAuth(secondary));
+    await setUserRole(email, role);
+  } finally {
+    await deleteApp(secondary);
+  }
 }
 
 /* ---------- Ajustement du stock (à la remise) ---------- */

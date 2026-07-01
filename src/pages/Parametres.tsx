@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useConfig, patchConfig, useRoles, setUserRole, removeUserRole } from "../data";
+import { useConfig, patchConfig, useRoles, setUserRole, removeUserRole, creerCompte } from "../data";
 import type { Config, Role } from "../types";
 
 const ROLE_LABEL: Record<Role, string> = { admin: "Admin (tout)", supervision: "Supervision (sauf réglages)", user: "Boutique (sans argent)" };
@@ -10,7 +10,24 @@ export default function Parametres() {
   const [draft, setDraft] = useState<Config | null>(null);
   const [packCat, setPackCat] = useState("");
   const [newMail, setNewMail] = useState("");
+  const [newPwd, setNewPwd] = useState("");
   const [newRole, setNewRole] = useState<Role>("user");
+
+  const creer = async () => {
+    const mail = newMail.trim();
+    if (!mail || newPwd.length < 6) { alert("Il faut un e-mail et un mot de passe d'au moins 6 caractères."); return; }
+    try {
+      await creerCompte(mail, newPwd, newRole);
+      setNewMail(""); setNewPwd("");
+      alert("Compte créé ✔ La personne peut se connecter avec cet e-mail et ce mot de passe.");
+    } catch (e: unknown) {
+      const code = e && typeof e === "object" && "code" in e ? String((e as { code: string }).code) : "";
+      alert(code.includes("email-already-in-use") ? "Cet e-mail a déjà un compte." :
+        code.includes("invalid-email") ? "E-mail invalide." :
+        code.includes("weak-password") ? "Mot de passe trop court (6 caractères min)." :
+        "Création impossible.");
+    }
+  };
 
   if (cfg && draft === null) {
     setDraft(JSON.parse(JSON.stringify(cfg)));
@@ -155,13 +172,18 @@ export default function Parametres() {
               <button className="x" onClick={() => { if (confirm("Retirer les droits de " + r.email + " ?")) void removeUserRole(r.email); }}>✕</button>
             </div>
           ))}
-          <div className="editrow">
-            <input placeholder="email@exemple.fr" value={newMail} onChange={(e) => setNewMail(e.target.value)} />
-            <select value={newRole} style={{ flex: "none", width: 150 }} onChange={(e) => setNewRole(e.target.value as Role)}>
-              {(["user", "supervision", "admin"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
-            </select>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--bord)" }}>
+            <label>Créer un compte</label>
+            <div className="editrow"><input placeholder="email@exemple.fr" value={newMail} onChange={(e) => setNewMail(e.target.value)} /></div>
+            <div className="editrow">
+              <input type="password" placeholder="mot de passe (≥ 6)" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
+              <select value={newRole} style={{ flex: "none", width: 150 }} onChange={(e) => setNewRole(e.target.value as Role)}>
+                {(["user", "supervision", "admin"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
+              </select>
+            </div>
+            <button className="btn-primary" onClick={() => void creer()}>+ Créer le compte</button>
+            <button className="mini" style={{ marginTop: 8 }} onClick={() => { if (newMail.trim()) { void setUserRole(newMail, newRole); setNewMail(""); } }}>Définir le rôle seulement (compte déjà existant)</button>
           </div>
-          <button className="mini" onClick={() => { if (newMail.trim()) { void setUserRole(newMail, newRole); setNewMail(""); } }}>+ Ajouter / définir</button>
         </div>
       </details>
       <div style={{ height: 30 }} />

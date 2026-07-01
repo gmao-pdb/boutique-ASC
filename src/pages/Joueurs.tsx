@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useConfig, useJoueurs, deleteJoueur, usePreinscriptions } from "../data";
+import { useAuth } from "../auth";
+import { useConfig, useJoueurs, deleteJoueur, demanderSuppression, annulerSuppression, usePreinscriptions } from "../data";
 import { calc } from "../calc";
 import type { Joueur, Role } from "../types";
 
@@ -20,6 +21,7 @@ const EQP_FILTERS = [
 
 export default function Joueurs({ role }: { role: Role }) {
   const showMoney = role !== "user";
+  const email = useAuth().user?.email || "";
   const config = useConfig();
   const joueurs = useJoueurs();
   const preinsc = usePreinscriptions();
@@ -95,19 +97,30 @@ export default function Joueurs({ role }: { role: Role }) {
       {rows.length === 0 && <div className="card muted">Aucun joueur.</div>}
 
       {rows.map(({ p, pk }) => (
-        <div key={p.id} className={"joueur-card" + (pk.partiel ? " toprep" : "")} onClick={() => nav("/joueur/" + p.id)}>
+        <div key={p.id} className={"joueur-card" + (pk.partiel ? " toprep" : "") + (p.supprDemandee ? " supprime" : "")} onClick={() => nav("/joueur/" + p.id)}>
           <div className="jc-main">
             <div className="jc-cat">{p.gardien ? "🧤 " : ""}{p.categorie}</div>
             <div className="jc-nom"><b>{p.nom}</b> {p.prenom}</div>
             <div className="jc-badges">
+              {p.supprDemandee && <span className="badge no">🗑️ suppression demandée</span>}
               {pk.total === 0 ? <span className="badge neutre">pas de pack</span>
                 : pk.complet ? <span className="badge ok">✅ pack remis</span>
                 : <span className="badge part">⏳ {pk.differe} à préparer</span>}
               {finBadge(p)}
             </div>
           </div>
-          <div className="jc-side">
-            <button className="jc-del" onClick={(e) => { e.stopPropagation(); if (confirm("Supprimer " + p.nom + " ?")) void deleteJoueur(p.id); }}>🗑️</button>
+          <div className="jc-side" onClick={(e) => e.stopPropagation()}>
+            {p.supprDemandee ? (
+              <>
+                {showMoney && <button className="jc-del" title="Effacer définitivement" onClick={() => { if (confirm("Effacer DÉFINITIVEMENT " + p.nom + " ? (irréversible)")) void deleteJoueur(p.id); }}>🗑️</button>}
+                <button className="jc-annul" title="Annuler la demande" onClick={() => void annulerSuppression(p.id)}>↩️</button>
+              </>
+            ) : (
+              <button className="jc-del" onClick={() => {
+                if (showMoney) { if (confirm("Supprimer " + p.nom + " ?")) void deleteJoueur(p.id); }
+                else { if (confirm("Demander la suppression de " + p.nom + " ?\n(à valider par un responsable)")) void demanderSuppression(p.id, email); }
+              }}>🗑️</button>
+            )}
           </div>
         </div>
       ))}

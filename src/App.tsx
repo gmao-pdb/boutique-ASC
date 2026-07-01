@@ -48,7 +48,7 @@ function AuthedApp() {
     <Routes>
       <Route element={<Layout role={role} />}>
         <Route index element={<Joueurs role={role} />} />
-        <Route path="joueur/:id" element={<FicheJoueur />} />
+        <Route path="joueur/:id" element={<FicheJoueur role={role} />} />
         <Route path="preinscriptions" element={<Preinscriptions />} />
         {role !== "user" && <Route path="dashboard" element={<TableauBord />} />}
         <Route path="stock" element={<Stock />} />

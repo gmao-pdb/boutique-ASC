@@ -56,6 +56,12 @@ export async function updateJoueur(id: string, j: Partial<Joueur>) {
 export async function deleteJoueur(id: string) {
   await deleteDoc(doc(db, "joueurs", id));
 }
+export async function demanderSuppression(id: string, email: string) {
+  await updateDoc(doc(db, "joueurs", id), { supprDemandee: true, supprPar: email, supprLe: Date.now() });
+}
+export async function annulerSuppression(id: string) {
+  await updateDoc(doc(db, "joueurs", id), { supprDemandee: false, supprPar: "", supprLe: 0 });
+}
 
 /* ---------- Stock ---------- */
 export const stockId = (article: string, taille: string) => (article + "__" + taille).replace(/\//g, "-");

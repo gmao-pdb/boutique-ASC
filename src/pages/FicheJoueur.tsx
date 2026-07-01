@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, stockId, adjustStock } from "../data";
+import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, demanderSuppression, annulerSuppression, stockId, adjustStock } from "../data";
+import { useAuth } from "../auth";
 import {
   calc, euro, autoCategorie, ageDe, packPour, tailleAuto, taillesEligibles,
   chequeCount, defaultChequeDates, splitAmount, chequeAmt,
 } from "../calc";
-import { type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config } from "../types";
+import { type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config, type Role } from "../types";
 
 const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); const d = new Date(); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
 
@@ -27,10 +28,11 @@ function buildPack(cfg: Config, cat: string, gardien: boolean, licence: Licence,
   });
 }
 
-export default function FicheJoueur() {
+export default function FicheJoueur({ role }: { role: Role }) {
   const cfg = useConfig();
   const joueurs = useJoueurs();
   const stock = useStock();
+  const email = useAuth().user?.email || "";
   const nav = useNavigate();
   const { id } = useParams();
   const isNew = id === "new";
@@ -166,9 +168,13 @@ export default function FicheJoueur() {
     for (const k of oldK) if (!newK.includes(k)) { const [a, t] = k.split("||"); void adjustStock(a, t, +1); }
     nav("/");
   };
-  const supprimer = async () => {
-    if (confirm("Supprimer ce joueur ?")) { await deleteJoueur(draft.id); nav("/"); }
+  const supprimerDirect = async () => {
+    if (confirm("Effacer définitivement ce joueur ? (irréversible)")) { await deleteJoueur(draft.id); nav("/"); }
   };
+  const demander = async () => {
+    if (confirm("Demander la suppression ? (à valider par un responsable)")) { await demanderSuppression(draft.id, email); nav("/"); }
+  };
+  const annuler = async () => { await annulerSuppression(draft.id); nav("/"); };
 
   const n = chequeCount(draft.reglement);
 
@@ -282,7 +288,18 @@ export default function FicheJoueur() {
       <div className="recap">Total : <b>{euro(c.total)}</b> · Reste dû : <b style={{ color: c.reste > 0 ? "var(--rouge)" : "var(--vert)" }}>{euro(c.reste)}</b></div>
 
       <button className="btn-primary" onClick={() => void enregistrer()}>Enregistrer</button>
-      {!isNew && <button className="btn-danger" onClick={() => void supprimer()}>Supprimer ce joueur</button>}
+      {!isNew && (
+        draft.supprDemandee ? (
+          <>
+            {role !== "user" && <button className="btn-danger" onClick={() => void supprimerDirect()}>🗑️ Effacer définitivement</button>}
+            <button className="btn-danger" style={{ borderColor: "var(--bord)", color: "var(--txt)" }} onClick={() => void annuler()}>↩️ Annuler la demande de suppression</button>
+          </>
+        ) : role === "user" ? (
+          <button className="btn-danger" onClick={() => void demander()}>🗑️ Demander la suppression</button>
+        ) : (
+          <button className="btn-danger" onClick={() => void supprimerDirect()}>Supprimer ce joueur</button>
+        )
+      )}
     </div>
   );
 }

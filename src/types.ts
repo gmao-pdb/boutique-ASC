@@ -43,6 +43,9 @@ export interface Joueur {
   regDate: string;
   commentaires: string;
   gabarit?: string; // gabarit de taille choisi
+  supprDemandee?: boolean; // suppression demandée (à valider par un superviseur)
+  supprPar?: string;
+  supprLe?: number;
   createdAt?: number;
   updatedAt?: number;
 }

@@ -1,14 +1,20 @@
 import { useNavigate } from "react-router-dom";
-import { usePreinscriptions, deletePreinscription, addJoueur } from "../data";
+import { usePreinscriptions, deletePreinscription, addJoueur, useJoueurs } from "../data";
 import type { Joueur, PackArticle, Preinscription } from "../types";
 
 export default function Preinscriptions() {
   const list = usePreinscriptions();
+  const joueurs = useJoueurs();
   const nav = useNavigate();
   if (!list) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
   const valider = async (p: Preinscription) => {
-    const articles: PackArticle[] = (p.articles || []).map((a) => ({ article: a.article, taille: a.taille, statut: "remis" }));
+    const dbl = (joueurs || []).find((j) =>
+      j.nom.trim().toLowerCase() === p.nom.trim().toLowerCase() &&
+      j.prenom.trim().toLowerCase() === p.prenom.trim().toLowerCase());
+    if (dbl && !confirm("⚠️ " + dbl.nom + " " + dbl.prenom + " (" + (dbl.categorie || "?") + ") existe déjà dans les joueurs.\nCréer quand même un doublon ?")) return;
+    // articles en « différé » : la remise réelle (et le décrément du stock) se fait sur la fiche
+    const articles: PackArticle[] = (p.articles || []).map((a) => ({ article: a.article, taille: a.taille, statut: "differe" }));
     const joueur: Omit<Joueur, "id"> = {
       categorie: p.categorie, gardien: p.gardien, licence: "",
       nom: p.nom, prenom: p.prenom, annee: p.annee, tel: p.tel,

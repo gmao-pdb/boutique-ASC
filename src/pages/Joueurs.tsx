@@ -17,7 +17,11 @@ const EQP_FILTERS = [
   { v: "", label: "Tous" },
   { v: "apreparer", label: "⏳ À préparer" },
   { v: "complet", label: "✅ Pack complet" },
+  { v: "acompleter", label: "⚠️ À compléter" },
 ] as const;
+
+// fiche incomplète : sans licence ou sans règlement, le total vaut 0 € et le joueur passerait pour « soldé »
+const ficheIncomplete = (p: Joueur) => !p.licence || !p.reglement;
 
 export default function Joueurs({ role }: { role: Role }) {
   const showMoney = role !== "user";
@@ -46,6 +50,7 @@ export default function Joueurs({ role }: { role: Role }) {
         const pk = packInfo(p);
         if (eqp === "apreparer" && !pk.partiel) return false;
         if (eqp === "complet" && !pk.complet) return false;
+        if (eqp === "acompleter" && !ficheIncomplete(p)) return false;
         if (ql && !(p.nom + " " + p.prenom + " " + (p.tel || "")).toLowerCase().includes(ql)) return false;
         return true;
       })
@@ -58,6 +63,8 @@ export default function Joueurs({ role }: { role: Role }) {
   if (!config || !joueurs) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
   const finBadge = (p: Joueur) => {
+    // fiche incomplète : visible par tous (sinon total = 0 € et le joueur passe pour soldé)
+    if (ficheIncomplete(p)) return <span className="badge no">⚠️ à compléter</span>;
     if (!showMoney) return null;
     const c = calc(p, config);
     if (c.reste <= 0) return <span className="badge ok">soldé</span>;

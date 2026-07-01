@@ -45,8 +45,12 @@ export default function Parametres() {
   const resetSaison = async () => {
     const s = saisonSuivante.trim();
     if (!s) { alert("Indique le nom de la nouvelle saison (ex. 2026-2027)."); return; }
-    if (prompt("⚠️ IRRÉVERSIBLE : efface tous les joueurs, chèques, commandes.\nExporte la base d'abord !\n\nTape NOUVELLE SAISON pour confirmer :") !== "NOUVELLE SAISON") return;
-    setBusy("Nouvelle saison…"); await nouvelleSaison(s); setBusy(""); alert("Nouvelle saison « " + s + " » — base repartie propre ✔");
+    if (prompt("⚠️ IRRÉVERSIBLE : efface tous les joueurs, chèques, commandes.\nUne sauvegarde JSON sera téléchargée automatiquement avant.\n\nTape NOUVELLE SAISON pour confirmer :") !== "NOUVELLE SAISON") return;
+    // filet de sécurité : on télécharge la sauvegarde complète AVANT d'effacer
+    setBusy("Sauvegarde…");
+    const d = await exportBase();
+    download("boutique-sauvegarde-avant-" + s + "-" + new Date().toISOString().slice(0, 10) + ".json", JSON.stringify(d, null, 2), "application/json");
+    setBusy("Nouvelle saison…"); await nouvelleSaison(s); setBusy(""); alert("Nouvelle saison « " + s + " » — base repartie propre ✔\n(La sauvegarde de l'ancienne saison est dans tes téléchargements.)");
   };
 
   const creer = async () => {

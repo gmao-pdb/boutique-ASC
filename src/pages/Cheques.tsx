@@ -71,6 +71,21 @@ export default function Cheques() {
 
   if (!cfg || !joueurs) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
 
+  // encaissement groupé : tous les chèques affichés déjà récupérés (jour de remise en banque)
+  const encaissables = items.filter((it) => it.recup && !it.enc);
+  const encaisserAffiches = async () => {
+    if (!confirm("Marquer " + encaissables.length + " chèque(s) récupéré(s) comme encaissés ?\n(montant : " + euro(encaissables.reduce((s, it) => s + it.montant, 0)) + ")")) return;
+    const parJoueur = new Map<string, { j: Joueur; idxs: number[] }>();
+    encaissables.forEach((it) => {
+      const e = parJoueur.get(it.j.id) || { j: it.j, idxs: [] };
+      e.idxs.push(it.idx); parJoueur.set(it.j.id, e);
+    });
+    for (const { j, idxs } of parJoueur.values()) {
+      const cheques = j.cheques.map((ch, k) => (idxs.includes(k) ? { ...ch, enc: true } : ch));
+      await updateJoueur(j.id, { cheques });
+    }
+  };
+
   return (
     <>
       <div className="totaux">
@@ -86,6 +101,12 @@ export default function Cheques() {
         <button className={"chip" + (filtre === "" ? " on" : "")} onClick={() => setFiltre("")}>Tous</button>
         <button className={"chip" + (filtre === "encaisse" ? " on" : "")} onClick={() => setFiltre("encaisse")}>Encaissés</button>
       </div>
+
+      {filtre === "aencaisser" && encaissables.length > 1 && (
+        <button className="mini" style={{ marginTop: 8 }} onClick={() => void encaisserAffiches()}>
+          🏦 Encaisser les {encaissables.length} chèques récupérés affichés
+        </button>
+      )}
 
       <div className="muted" style={{ margin: "10px 0 6px", fontSize: 13 }}>{items.length} chèque(s)</div>
       {items.length === 0 && <div className="card muted">Aucun chèque.</div>}

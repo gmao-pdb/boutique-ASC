@@ -175,10 +175,13 @@ export default function Stock() {
           {manquants.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à fournir. 👍</div>}
           {manquants.map((e) => {
             const cmd = enCommande.get(key2(e.article, e.taille)) || 0;
+            const dispo = stockMap.get(stockId(e.article, e.taille))?.quantite ?? 0;
             return (
               <div key={e.article + e.taille} className="manq">
                 <div><b>{e.qte}×</b> {e.article} <span className="muted">({e.taille})</span>
-                  {cmd > 0 ? <span className="badge part" style={{ marginLeft: 6 }}>🚚 {cmd} commandé(s)</span> : <span className="badge no" style={{ marginLeft: 6 }}>à commander</span>}
+                  {dispo >= e.qte ? <span className="badge ok" style={{ marginLeft: 6 }}>✅ en stock, à remettre</span>
+                    : dispo > 0 ? <span className="badge ok" style={{ marginLeft: 6 }}>✅ {dispo} en stock</span> : null}
+                  {dispo < e.qte && (cmd > 0 ? <span className="badge part" style={{ marginLeft: 6 }}>🚚 {cmd} commandé(s)</span> : <span className="badge no" style={{ marginLeft: 6 }}>à commander</span>)}
                 </div>
                 <div className="muted" style={{ fontSize: 12 }}>{e.qui.join(", ")}</div>
               </div>

@@ -157,6 +157,12 @@ export default function FicheJoueur({ role }: { role: Role }) {
     arts.filter((a) => a.statut === "remis" && a.taille && gereStock(a.article)).map((a) => a.article + "||" + a.taille);
   const enregistrer = async () => {
     if (!draft.nom.trim()) { alert("Le nom est obligatoire."); return; }
+    if (isNew && joueurs) {
+      const dbl = joueurs.find((j) =>
+        j.nom.trim().toLowerCase() === draft.nom.trim().toLowerCase() &&
+        j.prenom.trim().toLowerCase() === draft.prenom.trim().toLowerCase());
+      if (dbl && !confirm("⚠️ " + dbl.nom + " " + dbl.prenom + " (" + (dbl.categorie || "?") + (dbl.annee ? ", né(e) " + dbl.annee : "") + ") existe déjà.\nCréer quand même un doublon ?")) return;
+    }
     const payload: Partial<Joueur> = { ...draft, nom: draft.nom.trim(), prenom: draft.prenom.trim() };
     delete payload.id;
     if (isNew) await addJoueur(payload as Omit<Joueur, "id">);

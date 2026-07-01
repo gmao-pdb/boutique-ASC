@@ -45,7 +45,8 @@ function recoveredAmount(p: Joueur, total: number): number {
   if (n > 0) {
     let s = 0;
     const cq = p.cheques || [];
-    for (let i = 0; i < n; i++) if (cq[i] && cq[i].recup) s += chequeAmt(cq[i], total, n);
+    // un chèque encaissé est forcément récupéré (évite un "à encaisser" négatif sur données incohérentes)
+    for (let i = 0; i < n; i++) if (cq[i] && (cq[i].recup || cq[i].enc)) s += chequeAmt(cq[i], total, n);
     return s;
   }
   if (m && m !== "NON RÉGLÉ") return p.regOk ? total : 0;

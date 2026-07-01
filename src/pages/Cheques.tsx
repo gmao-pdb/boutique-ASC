@@ -126,8 +126,8 @@ export default function Cheques() {
             <div className="cc-row">
               <span className="mt"><input type="number" value={it.montant} onChange={(e) => setMontant(it.j, it.idx, +e.target.value)} /> €</span>
               <button className="mini" onClick={() => equilibrer(it.j, it.idx)} title="= total − les autres">=</button>
-              <label className="check"><input type="checkbox" checked={it.recup} onChange={(e) => patchCheque(it.j, it.idx, { recup: e.target.checked, dateRecup: e.target.checked && !it.dateRecup ? today : it.dateRecup })} /> Récupéré</label>
-              <label className="check"><input type="checkbox" checked={it.enc} onChange={(e) => patchCheque(it.j, it.idx, { enc: e.target.checked })} /> Encaissé</label>
+              <label className="check"><input type="checkbox" checked={it.recup} onChange={(e) => patchCheque(it.j, it.idx, { recup: e.target.checked, dateRecup: e.target.checked && !it.dateRecup ? today : it.dateRecup, ...(e.target.checked ? {} : { enc: false }) })} /> Récupéré</label>
+              <label className="check"><input type="checkbox" checked={it.enc} onChange={(e) => patchCheque(it.j, it.idx, { enc: e.target.checked, ...(e.target.checked && !it.recup ? { recup: true, dateRecup: it.dateRecup || today } : {}) })} /> Encaissé</label>
             </div>
           </div>
         );

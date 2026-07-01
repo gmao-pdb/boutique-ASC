@@ -1,0 +1,9 @@
+// Config du Worker boutiqueasc : site statique (dist/) servi en mode SPA.
+{
+  "name": "boutiqueasc",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

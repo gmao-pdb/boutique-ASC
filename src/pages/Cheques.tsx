@@ -18,7 +18,7 @@ export default function Cheques() {
   const cfg = useConfig();
   const joueurs = useJoueurs();
   const [q, setQ] = useState("");
-  const [filtre, setFiltre] = useState<"aencaisser" | "" | "encaisse">("aencaisser");
+  const [filtre, setFiltre] = useState<"arecuperer" | "aencaisser" | "" | "encaisse">("aencaisser");
 
   const today = todayIso();
 
@@ -59,6 +59,7 @@ export default function Cheques() {
     const ql = q.trim().toLowerCase();
     const filtered = out
       .filter((it) => {
+        if (filtre === "arecuperer" && it.recup) return false;
         if (filtre === "aencaisser" && it.enc) return false;
         if (filtre === "encaisse" && !it.enc) return false;
         if (ql && !(it.j.nom + " " + it.j.prenom).toLowerCase().includes(ql)) return false;
@@ -80,6 +81,7 @@ export default function Cheques() {
 
       <input className="search" type="search" placeholder="🔍 Joueur…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="chips">
+        <button className={"chip" + (filtre === "arecuperer" ? " on" : "")} onClick={() => setFiltre("arecuperer")}>À récupérer</button>
         <button className={"chip" + (filtre === "aencaisser" ? " on" : "")} onClick={() => setFiltre("aencaisser")}>À encaisser</button>
         <button className={"chip" + (filtre === "" ? " on" : "")} onClick={() => setFiltre("")}>Tous</button>
         <button className={"chip" + (filtre === "encaisse" ? " on" : "")} onClick={() => setFiltre("encaisse")}>Encaissés</button>

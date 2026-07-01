@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, stockId } from "../data";
+import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, stockId, adjustStock } from "../data";
 import {
   calc, euro, autoCategorie, ageDe, packPour, tailleAuto, taillesEligibles,
   chequeCount, defaultChequeDates, splitAmount, chequeAmt,
 } from "../calc";
-import { STATUT_LABEL, type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config } from "../types";
-
-const STATUTS: ArticleStatut[] = ["remis", "alivrer", "arecuperer", "acommander"];
+import { type ArticleStatut, type Cheque, type Joueur, type Licence, type PackArticle, type Config } from "../types";
 
 function blankJoueur(cfg: Config): Joueur {
   return {
@@ -22,7 +20,7 @@ function buildPack(cfg: Config, cat: string, gardien: boolean, licence: Licence,
   if (cfg.sacSiNouvelle && licence === "NOUVEAU") names.unshift("SAC");
   return names.map((nom) => {
     const taille = tailleAuto(cfg, nom, age) || "";
-    const statut: ArticleStatut = horsStock && horsStock(nom, taille) ? "acommander" : "remis";
+    const statut: ArticleStatut = horsStock && horsStock(nom, taille) ? "differe" : "remis";
     return { article: nom, taille, statut };
   });
 }
@@ -150,12 +148,20 @@ export default function FicheJoueur() {
   const sommeCheques = draft.cheques.reduce((s, ch) => s + chequeAmt(ch, c.total, chequeCount(draft.reglement)), 0);
 
   /* ---- enregistrer ---- */
+  const gereStock = (art: string) => !!cfg.catalogue.find((cc) => cc.nom === art)?.gererStock;
+  const remisKeys = (arts: PackArticle[]) =>
+    arts.filter((a) => a.statut === "remis" && a.taille && gereStock(a.article)).map((a) => a.article + "||" + a.taille);
   const enregistrer = async () => {
     if (!draft.nom.trim()) { alert("Le nom est obligatoire."); return; }
     const payload: Partial<Joueur> = { ...draft, nom: draft.nom.trim(), prenom: draft.prenom.trim() };
     delete payload.id;
     if (isNew) await addJoueur(payload as Omit<Joueur, "id">);
     else await updateJoueur(draft.id, payload);
+    // décrément / réincrément du stock selon les articles remis (si gestion activée)
+    const oldK = existing ? remisKeys(existing.articles || []) : [];
+    const newK = remisKeys(draft.articles);
+    for (const k of newK) if (!oldK.includes(k)) { const [a, t] = k.split("||"); void adjustStock(a, t, -1); }
+    for (const k of oldK) if (!newK.includes(k)) { const [a, t] = k.split("||"); void adjustStock(a, t, +1); }
     nav("/");
   };
   const supprimer = async () => {
@@ -217,9 +223,11 @@ export default function FicheJoueur() {
             <button className="szb" onClick={() => bumpTaille(i, 1)}>+</button>
           </div>
           <div className="art-l2">
-            <select className="art-stat" value={a.statut} onChange={(e) => setArt(i, { statut: e.target.value as ArticleStatut })}>
-              {STATUTS.map((s) => <option key={s} value={s}>{STATUT_LABEL[s]}</option>)}
-            </select>
+            <label className="switch">
+              <input type="checkbox" checked={a.statut === "remis"} onChange={(e) => setArt(i, { statut: (e.target.checked ? "remis" : "differe") as ArticleStatut })} />
+              <span className="slider" />
+              <span className="sw-txt">{a.statut === "remis" ? "Remis" : "Différé"}</span>
+            </label>
             <input className="art-motif" placeholder="commentaire…" value={a.motif || ""} onChange={(e) => setArt(i, { motif: e.target.value })} />
           </div>
         </div>

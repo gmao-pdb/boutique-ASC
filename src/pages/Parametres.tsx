@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { useConfig, patchConfig } from "../data";
-import type { Config } from "../types";
+import { useConfig, patchConfig, useRoles, setUserRole, removeUserRole } from "../data";
+import type { Config, Role } from "../types";
+
+const ROLE_LABEL: Record<Role, string> = { admin: "Admin (tout)", supervision: "Supervision (sauf réglages)", user: "Boutique (sans argent)" };
 
 export default function Parametres() {
   const cfg = useConfig();
+  const roles = useRoles();
   const [draft, setDraft] = useState<Config | null>(null);
   const [packCat, setPackCat] = useState("");
+  const [newMail, setNewMail] = useState("");
+  const [newRole, setNewRole] = useState<Role>("user");
 
   if (cfg && draft === null) {
     setDraft(JSON.parse(JSON.stringify(cfg)));
@@ -118,6 +123,26 @@ export default function Parametres() {
 
       <div style={{ height: 18 }} />
       <button className="btn-primary" onClick={() => void enregistrer()}>💾 Enregistrer les paramètres</button>
+
+      <h3 className="sec">Utilisateurs & droits</h3>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Donne un rôle à chaque e-mail (le compte doit exister dans Firebase → Authentication). Les changements s'appliquent tout de suite.</p>
+      {roles && roles.map((r) => (
+        <div className="editrow" key={r.email}>
+          <span style={{ flex: 1, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.email}</span>
+          <select value={r.role} style={{ flex: "none", width: 150 }} onChange={(e) => void setUserRole(r.email, e.target.value as Role)}>
+            {(["admin", "supervision", "user"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
+          </select>
+          <button className="x" onClick={() => { if (confirm("Retirer les droits de " + r.email + " ?")) void removeUserRole(r.email); }}>✕</button>
+        </div>
+      ))}
+      <div className="editrow">
+        <input placeholder="email@exemple.fr" value={newMail} onChange={(e) => setNewMail(e.target.value)} />
+        <select value={newRole} style={{ flex: "none", width: 150 }} onChange={(e) => setNewRole(e.target.value as Role)}>
+          {(["user", "supervision", "admin"] as Role[]).map((x) => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}
+        </select>
+      </div>
+      <button className="mini" onClick={() => { if (newMail.trim()) { void setUserRole(newMail, newRole); setNewMail(""); } }}>+ Ajouter / définir</button>
+      <div style={{ height: 30 }} />
     </div>
   );
 }

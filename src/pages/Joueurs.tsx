@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useConfig, useJoueurs, deleteJoueur, usePreinscriptions } from "../data";
 import { calc, euro } from "../calc";
-import type { Joueur } from "../types";
+import type { Joueur, Role } from "../types";
 
 const PAY_FILTERS = [
   { v: "", label: "Tous" },
@@ -11,7 +11,8 @@ const PAY_FILTERS = [
   { v: "solde", label: "🟢 Soldé" },
 ] as const;
 
-export default function Joueurs() {
+export default function Joueurs({ role }: { role: Role }) {
+  const showMoney = role !== "user";
   const config = useConfig();
   const joueurs = useJoueurs();
   const preinsc = usePreinscriptions();
@@ -58,20 +59,24 @@ export default function Joueurs() {
       )}
       <button className="btn-primary" style={{ marginBottom: 14 }} onClick={() => nav("/joueur/new")}>+ Nouveau joueur</button>
 
-      <div className="totaux">
-        <div className="t-item"><span>Total</span><b>{euro(tot.total)}</b></div>
-        <div className="t-item due"><span>À récupérer</span><b>{euro(tot.recup)}</b></div>
-        <div className="t-item hold"><span>À encaisser</span><b>{euro(tot.enc)}</b></div>
-        <div className="t-item paid"><span>Encaissé</span><b>{euro(tot.paye)}</b></div>
-      </div>
+      {showMoney && (
+        <div className="totaux">
+          <div className="t-item"><span>Total</span><b>{euro(tot.total)}</b></div>
+          <div className="t-item due"><span>À récupérer</span><b>{euro(tot.recup)}</b></div>
+          <div className="t-item hold"><span>À encaisser</span><b>{euro(tot.enc)}</b></div>
+          <div className="t-item paid"><span>Encaissé</span><b>{euro(tot.paye)}</b></div>
+        </div>
+      )}
 
       <input className="search" type="search" placeholder="🔍 Nom, prénom…" value={q} onChange={(e) => setQ(e.target.value)} />
 
-      <div className="chips">
-        {PAY_FILTERS.map((f) => (
-          <button key={f.v} className={"chip" + (pay === f.v ? " on" : "")} onClick={() => setPay(f.v)}>{f.label}</button>
-        ))}
-      </div>
+      {showMoney && (
+        <div className="chips">
+          {PAY_FILTERS.map((f) => (
+            <button key={f.v} className={"chip" + (pay === f.v ? " on" : "")} onClick={() => setPay(f.v)}>{f.label}</button>
+          ))}
+        </div>
+      )}
       <div className="chips">
         <button className={"chip" + (selCats.size === 0 ? " on" : "")} onClick={() => setSelCats(new Set())}>Toutes</button>
         {config.categories.map((c) => (
@@ -84,18 +89,20 @@ export default function Joueurs() {
       {rows.length === 0 && <div className="card muted">Aucun joueur. Ajoute-en un.</div>}
 
       {rows.map(({ p, c }) => (
-        <div key={p.id} className={"joueur-card" + (c.aRecuperer > 0 ? " torecover" : "")} onClick={() => nav("/joueur/" + p.id)}>
+        <div key={p.id} className={"joueur-card" + (showMoney && c.aRecuperer > 0 ? " torecover" : "")} onClick={() => nav("/joueur/" + p.id)}>
           <div className="jc-main">
             <div className="jc-cat">{p.gardien ? "🧤 " : ""}{p.categorie}</div>
             <div className="jc-nom"><b>{p.nom}</b> {p.prenom}</div>
-            <div className="jc-badges">
-              {c.reste <= 0 ? <span className="badge ok">soldé</span> : c.paye > 0 ? <span className="badge part">partiel</span> : <span className="badge no">à payer</span>}
-              {c.aRecuperer > 0 && <span className="badge no">à récup. {euro(c.aRecuperer)}</span>}
-              {c.aEncaisser > 0 && <span className="badge part">à encaiss. {euro(c.aEncaisser)}</span>}
-            </div>
+            {showMoney && (
+              <div className="jc-badges">
+                {c.reste <= 0 ? <span className="badge ok">soldé</span> : c.paye > 0 ? <span className="badge part">partiel</span> : <span className="badge no">à payer</span>}
+                {c.aRecuperer > 0 && <span className="badge no">à récup. {euro(c.aRecuperer)}</span>}
+                {c.aEncaisser > 0 && <span className="badge part">à encaiss. {euro(c.aEncaisser)}</span>}
+              </div>
+            )}
           </div>
           <div className="jc-side">
-            <div className="jc-reste" style={{ color: c.reste > 0 ? "var(--rouge)" : "var(--vert)" }}>{euro(c.reste)}</div>
+            {showMoney && <div className="jc-reste" style={{ color: c.reste > 0 ? "var(--rouge)" : "var(--vert)" }}>{euro(c.reste)}</div>}
             <button className="jc-del" onClick={(e) => { e.stopPropagation(); if (confirm("Supprimer " + p.nom + " ?")) void deleteJoueur(p.id); }}>🗑️</button>
           </div>
         </div>

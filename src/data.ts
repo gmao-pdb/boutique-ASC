@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 import { DEFAULT_CONFIG } from "./defaultConfig";
-import type { Config, Joueur, StockItem, Preinscription } from "./types";
+import type { Config, Joueur, StockItem, Preinscription, Role } from "./types";
 
 const configRef = doc(db, "config", "main");
 
@@ -90,4 +90,47 @@ export async function addPreinscription(p: Omit<Preinscription, "id">) {
 }
 export async function deletePreinscription(id: string) {
   await deleteDoc(doc(db, "preinscriptions", id));
+}
+
+/* ---------- Rôles utilisateurs ---------- */
+export function useRole(email: string | null | undefined): Role | null {
+  const [role, setRole] = useState<Role | null>(null);
+  useEffect(() => {
+    if (!email) { setRole(null); return; }
+    const e = email.toLowerCase();
+    const ref = doc(db, "roles", e);
+    return onSnapshot(ref, async (snap) => {
+      if (snap.exists()) { setRole(((snap.data().role as Role) || "user")); return; }
+      // pas de rôle pour cet e-mail : si AUCUN rôle n'existe encore, le 1er connecté devient admin
+      const all = await getDocs(collection(db, "roles"));
+      if (all.empty) { await setDoc(ref, { role: "admin" }); setRole("admin"); }
+      else setRole("user");
+    });
+  }, [email]);
+  return role;
+}
+export function useRoles(): { email: string; role: Role }[] | null {
+  const [list, setList] = useState<{ email: string; role: Role }[] | null>(null);
+  useEffect(() => {
+    return onSnapshot(collection(db, "roles"), (snap) => {
+      setList(snap.docs.map((d) => ({ email: d.id, role: (d.data().role as Role) || "user" })));
+    });
+  }, []);
+  return list;
+}
+export async function setUserRole(email: string, role: Role) {
+  await setDoc(doc(db, "roles", email.toLowerCase().trim()), { role });
+}
+export async function removeUserRole(email: string) {
+  await deleteDoc(doc(db, "roles", email.toLowerCase().trim()));
+}
+
+/* ---------- Ajustement du stock (à la remise) ---------- */
+export async function adjustStock(article: string, taille: string, delta: number) {
+  const id = stockId(article, taille);
+  const ref = doc(db, "stock", id);
+  const snap = await getDoc(ref);
+  const cur = snap.exists() ? Number(snap.data().quantite) || 0 : 0;
+  const seuil = snap.exists() ? Number(snap.data().seuilMini) || 0 : 0;
+  await setDoc(ref, { article, taille, quantite: Math.max(0, cur + delta), seuilMini: seuil, id }, { merge: true });
 }

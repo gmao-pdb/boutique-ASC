@@ -2,14 +2,14 @@
 
 export type Licence = "" | "NOUVEAU" | "RENOUV." | "LICENCE";
 
-// Cycle d'un article du pack
-export type ArticleStatut = "remis" | "alivrer" | "arecuperer" | "acommander";
+// Remise d'un article : remis ou différé (le reste — à commander / récupérer — se gère dans le Stock)
+export type ArticleStatut = "remis" | "differe";
 export const STATUT_LABEL: Record<ArticleStatut, string> = {
   remis: "✅ Remis",
-  alivrer: "📦 À livrer",
-  arecuperer: "🚚 À récupérer",
-  acommander: "🛒 À commander",
+  differe: "⏳ Différé",
 };
+
+export type Role = "admin" | "supervision" | "user";
 
 export interface PackArticle {
   article: string;
@@ -47,7 +47,7 @@ export interface Joueur {
 }
 
 export interface Remise { nom: string; montant: number; }
-export interface CatalogueItem { nom: string; tailles: string[]; }
+export interface CatalogueItem { nom: string; tailles: string[]; gererStock?: boolean }
 
 // Gabarit = une ligne de la grille de correspondance des tailles.
 // valeurs : pour chaque système (colonne), la taille équivalente.

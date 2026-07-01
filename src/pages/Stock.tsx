@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import { useConfig, useJoueurs, useStock, setStockItem, enregistrerInventaire, stockId, patchConfig } from "../data";
-import { STATUT_LABEL, type ArticleStatut, type CatalogueItem, type StockItem } from "../types";
-
-const MANQ_STATUTS: ArticleStatut[] = ["acommander", "arecuperer", "alivrer"];
+import { type CatalogueItem, type StockItem } from "../types";
 
 export default function Stock() {
   const cfg = useConfig();
@@ -20,20 +18,19 @@ export default function Stock() {
     return m;
   }, [stock]);
 
+  // Tout ce qui est différé (non remis), regroupé par article + taille
   const manquants = useMemo(() => {
-    const res: Record<ArticleStatut, Map<string, { article: string; taille: string; qte: number; qui: string[] }>> = {
-      remis: new Map(), alivrer: new Map(), arecuperer: new Map(), acommander: new Map(),
-    };
+    const map = new Map<string, { article: string; taille: string; qte: number; qui: string[] }>();
     (joueurs || []).forEach((j) => {
       (j.articles || []).forEach((a) => {
         if (a.statut === "remis") return;
         const key = a.article + "__" + (a.taille || "?");
-        const e = res[a.statut].get(key) || { article: a.article, taille: a.taille || "?", qte: 0, qui: [] };
+        const e = map.get(key) || { article: a.article, taille: a.taille || "?", qte: 0, qui: [] };
         e.qte++; e.qui.push(j.nom + (j.prenom ? " " + j.prenom : ""));
-        res[a.statut].set(key, e);
+        map.set(key, e);
       });
     });
-    return res;
+    return [...map.values()].sort((a, b) => a.article.localeCompare(b.article));
   }, [joueurs]);
 
   if (!cfg || !joueurs || !stock) return <div className="muted" style={{ padding: 20 }}>Chargement…</div>;
@@ -58,6 +55,8 @@ export default function Stock() {
   };
   const supprimerTaille = (nom: string, t: string) =>
     saveCatalogue(cfg.catalogue.map((c) => (c.nom === nom ? { ...c, tailles: c.tailles.filter((x) => x !== t) } : c)));
+  const toggleGererStock = (nom: string, v: boolean) =>
+    saveCatalogue(cfg.catalogue.map((c) => (c.nom === nom ? { ...c, gererStock: v } : c)));
 
   const faireInventaire = async () => {
     if (!confirm("Enregistrer un inventaire daté avec les quantités actuelles ?")) return;
@@ -72,21 +71,18 @@ export default function Stock() {
         <button className={"chip" + (vue === "manquants" ? " on" : "")} onClick={() => setVue("manquants")}>🛒 Manquants</button>
       </div>
 
-      {vue === "manquants" && MANQ_STATUTS.map((st) => {
-        const list = [...manquants[st].values()].sort((a, b) => a.article.localeCompare(b.article));
-        return (
-          <div key={st}>
-            <h3 className="sec">{STATUT_LABEL[st]} ({list.reduce((s, e) => s + e.qte, 0)})</h3>
-            {list.length === 0 && <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>Rien.</div>}
-            {list.map((e) => (
-              <div key={e.article + e.taille} className="manq">
-                <div><b>{e.qte}×</b> {e.article} <span className="muted">({e.taille})</span></div>
-                <div className="muted" style={{ fontSize: 12 }}>{e.qui.join(", ")}</div>
-              </div>
-            ))}
-          </div>
-        );
-      })}
+      {vue === "manquants" && (
+        <>
+          <h3 className="sec">À fournir / différés ({manquants.reduce((s, e) => s + e.qte, 0)})</h3>
+          {manquants.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à fournir. 👍</div>}
+          {manquants.map((e) => (
+            <div key={e.article + e.taille} className="manq">
+              <div><b>{e.qte}×</b> {e.article} <span className="muted">({e.taille})</span></div>
+              <div className="muted" style={{ fontSize: 12 }}>{e.qui.join(", ")}</div>
+            </div>
+          ))}
+        </>
+      )}
 
       {vue === "articles" && (() => {
         let refs = 0, rupt = 0, bas = 0;
@@ -126,6 +122,10 @@ export default function Stock() {
                     <span className="aa-meta">{dot} {art.tailles.length} taille{art.tailles.length > 1 ? "s" : ""}</span>
                   </summary>
                   <div className="aa-body">
+                    <label className="check" style={{ marginTop: 0, marginBottom: 8 }}>
+                      <input type="checkbox" checked={!!art.gererStock} onChange={(e) => toggleGererStock(art.nom, e.target.checked)} />
+                      Gérer le stock de cet article (la remise décrémente la quantité)
+                    </label>
                     <table className="stk">
                       <thead><tr><th>Taille</th><th>Quantité</th><th>Seuil</th><th>État</th><th></th></tr></thead>
                       <tbody>

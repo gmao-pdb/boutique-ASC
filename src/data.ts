@@ -164,6 +164,42 @@ export async function deleteCommande(id: string) {
   await deleteDoc(doc(db, "commandes", id));
 }
 
+/* ---------- Sauvegarde / saisons ---------- */
+export async function exportBase() {
+  const dump = (s: { docs: { id: string; data: () => Record<string, unknown> }[] }) => s.docs.map((d) => ({ __id: d.id, ...d.data() }));
+  const [cfgSnap, joueurs, stock, commandes, inventaires, preinscriptions, roles] = await Promise.all([
+    getDoc(configRef),
+    getDocs(collection(db, "joueurs")), getDocs(collection(db, "stock")), getDocs(collection(db, "commandes")),
+    getDocs(collection(db, "inventaires")), getDocs(collection(db, "preinscriptions")), getDocs(collection(db, "roles")),
+  ]);
+  return {
+    version: 1, date: new Date().toISOString(),
+    config: cfgSnap.exists() ? cfgSnap.data() : null,
+    joueurs: dump(joueurs), stock: dump(stock), commandes: dump(commandes),
+    inventaires: dump(inventaires), preinscriptions: dump(preinscriptions), roles: dump(roles),
+  };
+}
+interface DumpDoc { __id: string; [k: string]: unknown }
+export async function importBase(data: { config?: unknown; joueurs?: DumpDoc[]; stock?: DumpDoc[]; commandes?: DumpDoc[]; inventaires?: DumpDoc[]; preinscriptions?: DumpDoc[]; roles?: DumpDoc[] }) {
+  const tasks: Promise<unknown>[] = [];
+  if (data.config) tasks.push(setDoc(configRef, data.config as Record<string, unknown>));
+  const putAll = (col: string, arr?: DumpDoc[]) => (arr || []).forEach((d) => { const { __id, ...rest } = d; tasks.push(setDoc(doc(db, col, __id), rest as Record<string, unknown>)); });
+  putAll("joueurs", data.joueurs); putAll("stock", data.stock); putAll("commandes", data.commandes);
+  putAll("inventaires", data.inventaires); putAll("preinscriptions", data.preinscriptions); putAll("roles", data.roles);
+  await Promise.all(tasks);
+}
+// Nouvelle saison : efface joueurs / commandes / pré-inscriptions ; garde config (nouvelle saison), stock, inventaires, rôles.
+export async function nouvelleSaison(saison: string) {
+  const [joueurs, commandes, preinscriptions] = await Promise.all([
+    getDocs(collection(db, "joueurs")), getDocs(collection(db, "commandes")), getDocs(collection(db, "preinscriptions")),
+  ]);
+  const dels: Promise<unknown>[] = [];
+  ([["joueurs", joueurs], ["commandes", commandes], ["preinscriptions", preinscriptions]] as const)
+    .forEach(([col, snap]) => snap.docs.forEach((d) => dels.push(deleteDoc(doc(db, col, d.id)))));
+  await Promise.all(dels);
+  await updateDoc(configRef, { saison });
+}
+
 /* ---------- Ajustement du stock (à la remise) ---------- */
 export async function adjustStock(article: string, taille: string, delta: number) {
   const id = stockId(article, taille);

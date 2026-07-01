@@ -1,6 +1,12 @@
 import { useState } from "react";
-import { useConfig, patchConfig, useRoles, setUserRole, removeUserRole, creerCompte } from "../data";
-import type { Config, Role } from "../types";
+import { useConfig, patchConfig, useRoles, setUserRole, removeUserRole, creerCompte, exportBase, importBase, nouvelleSaison } from "../data";
+import { calc } from "../calc";
+import type { Config, Role, Joueur } from "../types";
+
+function download(name: string, content: string, type: string) {
+  const b = new Blob([content], { type }); const u = URL.createObjectURL(b);
+  const a = document.createElement("a"); a.href = u; a.download = name; a.click(); URL.revokeObjectURL(u);
+}
 
 const ROLE_LABEL: Record<Role, string> = { admin: "Admin (tout)", supervision: "Supervision (sauf réglages)", user: "Boutique (sans argent)" };
 
@@ -12,6 +18,36 @@ export default function Parametres() {
   const [newMail, setNewMail] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [newRole, setNewRole] = useState<Role>("user");
+  const [saisonSuivante, setSaisonSuivante] = useState("");
+  const [busy, setBusy] = useState("");
+
+  const exporterJSON = async () => {
+    setBusy("Export…"); const d = await exportBase();
+    download("boutique-sauvegarde-" + new Date().toISOString().slice(0, 10) + ".json", JSON.stringify(d, null, 2), "application/json");
+    setBusy("");
+  };
+  const exporterCSV = async () => {
+    if (!draft) return;
+    setBusy("Export…"); const d = await exportBase();
+    const cf = (d.config || draft) as Config;
+    const head = ["Nom", "Prénom", "Catégorie", "Gardien", "Licence", "Règlement", "Total", "Payé", "Reste", "Articles remis", "Articles différés"];
+    const rows = (d.joueurs as unknown as Joueur[]).map((p) => { const c = calc(p, cf); const remis = (p.articles || []).filter((a) => a.statut === "remis").length; const diff = (p.articles || []).length - remis; return [p.nom, p.prenom, p.categorie, p.gardien ? "OUI" : "NON", p.licence, p.reglement, c.total, c.paye, c.reste, remis, diff]; });
+    const csv = [head, ...rows].map((r) => r.map((v) => '"' + String(v ?? "").replace(/"/g, '""') + '"').join(";")).join("\r\n");
+    download("joueurs-" + draft.saison + ".csv", "﻿" + csv, "text/csv"); setBusy("");
+  };
+  const importer = async (file: File) => {
+    try {
+      const data = JSON.parse(await file.text());
+      if (!confirm("Importer cette sauvegarde ?\nLes données du fichier écrasent/complètent la base actuelle.")) return;
+      setBusy("Import…"); await importBase(data); setBusy(""); alert("Sauvegarde importée ✔");
+    } catch { setBusy(""); alert("Fichier invalide."); }
+  };
+  const resetSaison = async () => {
+    const s = saisonSuivante.trim();
+    if (!s) { alert("Indique le nom de la nouvelle saison (ex. 2026-2027)."); return; }
+    if (prompt("⚠️ IRRÉVERSIBLE : efface tous les joueurs, chèques, commandes.\nExporte la base d'abord !\n\nTape NOUVELLE SAISON pour confirmer :") !== "NOUVELLE SAISON") return;
+    setBusy("Nouvelle saison…"); await nouvelleSaison(s); setBusy(""); alert("Nouvelle saison « " + s + " » — base repartie propre ✔");
+  };
 
   const creer = async () => {
     const mail = newMail.trim();
@@ -186,6 +222,27 @@ export default function Parametres() {
           </div>
         </div>
       </details>
+
+      <details className="param-tile">
+        <summary>🗓️ Sauvegarde & fin de saison</summary>
+        <div className="pt-body">
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Exporte une sauvegarde complète, puis (nouvelle saison) repars propre en gardant tout ton paramétrage.</p>
+          {busy && <div className="hint vert">{busy}</div>}
+          <button className="btn-primary" onClick={() => void exporterJSON()}>💾 Exporter la base (sauvegarde .json)</button>
+          <button className="mini" style={{ marginTop: 8 }} onClick={() => void exporterCSV()}>📊 Exporter les joueurs (Excel/CSV)</button>
+
+          <h3 className="sec" style={{ marginTop: 18 }}>Restaurer</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Recharge une sauvegarde .json (les données du fichier reprennent leur place).</p>
+          <input type="file" accept=".json" onChange={(e) => { const f = e.target.files?.[0]; if (f) void importer(f); e.target.value = ""; }} />
+
+          <h3 className="sec" style={{ marginTop: 18 }}>Nouvelle saison (repartir propre)</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Efface les joueurs, chèques et commandes. Garde tarifs, catégories, packs, catalogue et stock. <b>Exporte d'abord !</b></p>
+          <label>Nom de la nouvelle saison</label>
+          <input placeholder="ex. 2026-2027" value={saisonSuivante} onChange={(e) => setSaisonSuivante(e.target.value)} />
+          <button className="btn-danger" style={{ marginTop: 10 }} onClick={() => void resetSaison()}>🗓️ Démarrer la nouvelle saison</button>
+        </div>
+      </details>
+
       <div style={{ height: 30 }} />
     </div>
   );

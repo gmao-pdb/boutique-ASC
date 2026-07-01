@@ -10,6 +10,7 @@ import Stock from "./pages/Stock";
 import Parametres from "./pages/Parametres";
 import Inscription from "./pages/Inscription";
 import Preinscriptions from "./pages/Preinscriptions";
+import SeedTest from "./pages/SeedTest";
 
 function Layout({ role }: { role: Role }) {
   const { user, logout } = useAuth();
@@ -50,6 +51,7 @@ function AuthedApp() {
         <Route index element={<Joueurs role={role} />} />
         <Route path="joueur/:id" element={<FicheJoueur role={role} />} />
         <Route path="preinscriptions" element={<Preinscriptions />} />
+        <Route path="generer-test" element={<SeedTest />} />
         {role !== "user" && <Route path="dashboard" element={<TableauBord />} />}
         <Route path="stock" element={<Stock />} />
         {role === "admin" && <Route path="parametres" element={<Parametres />} />}

@@ -46,6 +46,7 @@ export interface Joueur {
   supprDemandee?: boolean; // suppression demandée (à valider par un superviseur)
   supprPar?: string;
   supprLe?: number;
+  test?: boolean; // joueur de test (pour purge)
   createdAt?: number;
   updatedAt?: number;
 }

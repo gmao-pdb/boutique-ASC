@@ -7,6 +7,6 @@
     "not_found_handling": "single-page-application"
   },
   "routes": [
-    { "pattern": "pack-asc.master.corsica", "custom_domain": true }
+    { "pattern": "packcasinca.master.corsica", "custom_domain": true }
   ]
 }

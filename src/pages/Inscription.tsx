@@ -46,7 +46,7 @@ export default function Inscription() {
       <div className="login-card">
         <div className="login-logo">ASC</div>
         <h1>Merci {prenom || nom} !</h1>
-        <p className="muted">Ta demande est bien enregistrée. Le règlement, la validation et la récupération du pack se feront directement à la boutique — on a déjà toutes tes infos. Merci de nous aider à préparer la saison ! 💙</p>
+        <p className="muted">Ta demande est bien enregistrée. Le règlement, la validation et la récupération du pack se feront directement à la boutique — on a déjà toutes tes infos. Merci de nous aider à préparer la saison ! 💛💚</p>
       </div>
     </div>
   );

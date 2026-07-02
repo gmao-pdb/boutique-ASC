@@ -12,7 +12,7 @@ const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); co
 
 function blankJoueur(cfg: Config): Joueur {
   return {
-    id: "", categorie: cfg.categories[0] || "", gardien: false, licence: "",
+    id: "", categorie: cfg.categories[0] || "", gardien: false, licence: "RENOUV.",
     nom: "", prenom: "", annee: "", tel: "",
     articles: [], remises: [], reglement: "", cheques: [], regOk: false, regDate: "", commentaires: "",
   };

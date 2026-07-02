@@ -16,7 +16,7 @@ export default function Preinscriptions() {
     // articles en « différé » : la remise réelle (et le décrément du stock) se fait sur la fiche
     const articles: PackArticle[] = (p.articles || []).map((a) => ({ article: a.article, taille: a.taille, statut: "differe" }));
     const joueur: Omit<Joueur, "id"> = {
-      categorie: p.categorie, gardien: p.gardien, licence: "",
+      categorie: p.categorie, gardien: p.gardien, licence: "RENOUV.",
       nom: p.nom, prenom: p.prenom, annee: p.annee, tel: p.tel,
       articles, remises: [], reglement: "", cheques: [], regOk: false, regDate: "", commentaires: "",
     };

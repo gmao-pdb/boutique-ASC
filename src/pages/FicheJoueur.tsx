@@ -39,6 +39,7 @@ export default function FicheJoueur({ role }: { role: Role }) {
 
   const existing = !isNew && joueurs ? joueurs.find((j) => j.id === id) : null;
   const [draft, setDraft] = useState<Joueur | null>(null);
+  const [voirTout, setVoirTout] = useState(false);
 
   // initialise le brouillon une fois config + joueur chargés
   const ready = !!cfg && (isNew || !!existing);
@@ -134,10 +135,7 @@ export default function FicheJoueur({ role }: { role: Role }) {
       const cheques: Cheque[] = Array.from({ length: n }, (_, i) => ({ datePrev: dates[i], montant: montants[i], recup: false, enc: false }));
       setDraft({ ...draft, reglement: m, cheques, regOk: false });
     } else {
-      const z = (x: number) => String(x).padStart(2, "0");
-      const d = new Date();
-      const auj = d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
-      const regDate = m && m !== "NON RÉGLÉ" ? (draft.regDate || auj) : draft.regDate;
+      const regDate = m && m !== "NON RÉGLÉ" ? (draft.regDate || todayIso()) : draft.regDate;
       setDraft({ ...draft, reglement: m, cheques: [], regOk: false, regDate });
     }
   };
@@ -183,14 +181,12 @@ export default function FicheJoueur({ role }: { role: Role }) {
   const annuler = async () => { await annulerSuppression(draft.id); nav("/"); };
 
   const n = chequeCount(draft.reglement);
+  const dfCount = draft.articles.filter((a) => a.statut !== "remis").length;
+  const totalArts = draft.articles.length;
 
-  return (
-    <div className="fiche">
-      <div className="fiche-top">
-        <button className="lnk" onClick={() => nav(-1)}>← Retour</button>
-        <b>{isNew ? "Nouveau joueur" : draft.nom + " " + draft.prenom}</b>
-      </div>
-
+  /* ---- sections réutilisées (création = tout ouvert / fiche existante = tuiles) ---- */
+  const secInfos = (
+    <>
       <label>Date de naissance</label>
       <input type="date" value={draft.annee} onChange={(e) => onAnnee(e.target.value)} />
       {age != null && <div className="hint vert">🎂 {age} ans → {draft.categorie}{draft.gardien ? " · 🧤 pack gardien" : ""}</div>}
@@ -214,16 +210,32 @@ export default function FicheJoueur({ role }: { role: Role }) {
       </div>
       <label>Téléphone</label>
       <input type="tel" value={draft.tel} onChange={(e) => set({ tel: e.target.value })} />
+    </>
+  );
 
-      {/* PACK */}
-      <h3 className="sec">Pack à remettre</h3>
+  // fiche existante : seuls les différés s'affichent par défaut
+  const packRows = draft.articles
+    .map((a, i) => ({ a, i }))
+    .filter(({ a }) => isNew || voirTout || a.statut !== "remis");
+
+  const secPack = (
+    <>
       <div className="row-btns">
-        <button className="mini" onClick={() => bumpAll(-1)}>▾ Tailles −</button>
-        <button className="mini" onClick={() => bumpAll(1)}>▴ Tailles +</button>
-        <button className="mini" onClick={() => tousStatut("remis")}>✅ Tout remis</button>
-        <button className="mini" onClick={rechargerPack}>↻ Recharger</button>
+        {isNew && <button className="mini" onClick={() => bumpAll(-1)}>▾ Tailles −</button>}
+        {isNew && <button className="mini" onClick={() => bumpAll(1)}>▴ Tailles +</button>}
+        {dfCount > 0 && <button className="mini" onClick={() => tousStatut("remis")}>✅ Tout remis</button>}
+        {isNew && <button className="mini" onClick={rechargerPack}>↻ Recharger</button>}
+        {!isNew && totalArts - dfCount > 0 && (
+          <button className="mini" onClick={() => setVoirTout(!voirTout)}>
+            {voirTout ? "Réduire aux différés" : "👁 Voir les " + (totalArts - dfCount) + " remis"}
+          </button>
+        )}
       </div>
-      {draft.articles.map((a, i) => (
+      {!isNew && !voirTout && dfCount === 0 && totalArts > 0 && (
+        <div className="hint vert" style={{ marginTop: 8 }}>✅ Pack complet — tout a été remis.</div>
+      )}
+      {totalArts === 0 && <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>Aucun article. Renseigne la date de naissance (tuile Infos) pour générer le pack.</div>}
+      {packRows.map(({ a, i }) => (
         <div key={i} className={"art" + (a.statut !== "remis" ? " off" : "")}>
           <div className="art-l1">
             <select className="art-name" value={a.article} onChange={(e) => setArt(i, { article: e.target.value, taille: tailleAuto(cfg, e.target.value, age) || "" })}>
@@ -246,8 +258,11 @@ export default function FicheJoueur({ role }: { role: Role }) {
           </div>
         </div>
       ))}
+    </>
+  );
 
-      {/* REMISES */}
+  const secReglement = (
+    <>
       <h3 className="sec">Remises</h3>
       <div className="checks-row">
         {cfg.remises.map((r) => (
@@ -255,7 +270,6 @@ export default function FicheJoueur({ role }: { role: Role }) {
         ))}
       </div>
 
-      {/* REGLEMENT */}
       <h3 className="sec">Règlement</h3>
       <select value={draft.reglement} onChange={(e) => onReglement(e.target.value)}>
         <option value="">— mode —</option>
@@ -290,9 +304,12 @@ export default function FicheJoueur({ role }: { role: Role }) {
 
       <label>Commentaires</label>
       <textarea rows={2} value={draft.commentaires} onChange={(e) => set({ commentaires: e.target.value })} />
+    </>
+  );
 
+  const boutonsFin = (
+    <>
       <div className="recap">Total : <b>{euro(c.total)}</b> · Reste dû : <b style={{ color: c.reste > 0 ? "var(--rouge)" : "var(--vert)" }}>{euro(c.reste)}</b></div>
-
       <button className="btn-primary" onClick={() => void enregistrer()}>Enregistrer</button>
       {!isNew && (
         draft.supprDemandee ? (
@@ -306,6 +323,58 @@ export default function FicheJoueur({ role }: { role: Role }) {
           <button className="btn-danger" onClick={() => void supprimerDirect()}>Supprimer ce joueur</button>
         )
       )}
+    </>
+  );
+
+  /* ---- création : formulaire complet ouvert ---- */
+  if (isNew) {
+    return (
+      <div className="fiche">
+        <div className="fiche-top">
+          <button className="lnk" onClick={() => nav(-1)}>← Retour</button>
+          <b>Nouveau joueur</b>
+        </div>
+        {secInfos}
+        <h3 className="sec">Pack à remettre</h3>
+        {secPack}
+        {secReglement}
+        {boutonsFin}
+      </div>
+    );
+  }
+
+  /* ---- fiche existante : en-tête + tuiles fermées ---- */
+  const badgePack = dfCount > 0
+    ? <span className="badge part">⏳ {dfCount} à préparer</span>
+    : totalArts > 0 ? <span className="badge ok">✅ complet</span> : <span className="badge neutre">vide</span>;
+  const badgeReg = (!draft.licence || !draft.reglement)
+    ? <span className="badge no">⚠️ à compléter</span>
+    : c.reste <= 0 ? <span className="badge ok">soldé</span> : <span className="badge no">{euro(c.reste)} dû</span>;
+
+  return (
+    <div className="fiche">
+      <div className="fiche-head">
+        <button className="lnk" onClick={() => nav(-1)}>← Retour</button>
+        <div className="fh-nom">{draft.nom} <span>{draft.prenom}</span></div>
+        <div className="fh-cat">{draft.gardien ? "🧤 " : ""}{draft.categorie}{age != null ? " · " + age + " ans" : ""}{draft.licence ? " · " + draft.licence : ""}</div>
+      </div>
+
+      <details className="param-tile">
+        <summary><span>👤 Infos joueur</span></summary>
+        <div className="pt-body">{secInfos}</div>
+      </details>
+
+      <details className="param-tile">
+        <summary><span>🎽 Pack à remettre</span><span className="pt-badges">{badgePack}</span></summary>
+        <div className="pt-body">{secPack}</div>
+      </details>
+
+      <details className="param-tile">
+        <summary><span>💶 Règlement</span><span className="pt-badges">{badgeReg}</span></summary>
+        <div className="pt-body">{secReglement}</div>
+      </details>
+
+      {boutonsFin}
     </div>
   );
 }

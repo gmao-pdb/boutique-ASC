@@ -227,6 +227,13 @@ input:focus, select:focus, textarea:focus {
 /* Fiche joueur */
 .fiche { padding-bottom: 30px; }
 .fiche-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 16px; }
+.fiche-head { margin-bottom: 14px; }
+.fiche-head .lnk { display: block; margin-bottom: 8px; }
+.fh-nom { font-size: 23px; font-weight: 800; letter-spacing: .2px; line-height: 1.15; }
+.fh-nom span { font-weight: 600; }
+.fh-cat { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; margin-top: 3px; }
+.pt-badges { display: flex; gap: 6px; align-items: center; }
+.param-tile > summary > span:first-child { flex: 1; text-align: left; }
 .lnk { background: none; border: none; color: #15803d; font-weight: 700; font-size: 15px; padding: 0; }
 .hint { font-size: 12.5px; margin-top: 6px; font-weight: 700; }
 .hint.vert { color: #15803d; background: #e5f6eb; display: inline-block; padding: 6px 12px; border-radius: 999px; }

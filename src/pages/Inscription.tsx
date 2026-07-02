@@ -46,7 +46,7 @@ export default function Inscription() {
       <div className="login-card">
         <div className="login-logo">ASC</div>
         <h1>Merci {prenom || nom} !</h1>
-        <p className="muted">Ta demande est enregistrée. Présente-toi au comptoir de la boutique : on a déjà tes infos, il ne restera que le règlement. 👍</p>
+        <p className="muted">Ta demande est bien enregistrée. Le règlement, la validation et la récupération du pack se feront directement à la boutique — on a déjà toutes tes infos. Merci de nous aider à préparer la saison ! 💙</p>
       </div>
     </div>
   );
@@ -58,7 +58,7 @@ export default function Inscription() {
         <div><h1>Pré-inscription boutique</h1><div className="sub">AS Casinca · saison {cfg.saison}</div></div>
       </header>
       <div className="app-main">
-        <p className="muted" style={{ marginTop: 0 }}>Remplis tes infos et choisis tes tailles. Tu finaliseras (et paieras) au comptoir.</p>
+        <p className="muted" style={{ marginTop: 0 }}>Remplis tes infos et choisis tes tailles pour nous faire gagner du temps. Le règlement, la validation et la récupération du pack se font ensuite directement à la boutique.</p>
 
         <div className="grid2">
           <div><label>Nom</label><input value={nom} onChange={(e) => setNom(e.target.value)} /></div>

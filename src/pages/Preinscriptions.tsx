@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { usePreinscriptions, deletePreinscription, addJoueur, useJoueurs } from "../data";
+import Icon from "../Icon";
 import type { Joueur, PackArticle, Preinscription } from "../types";
 
 export default function Preinscriptions() {
@@ -12,7 +13,7 @@ export default function Preinscriptions() {
     const dbl = (joueurs || []).find((j) =>
       j.nom.trim().toLowerCase() === p.nom.trim().toLowerCase() &&
       j.prenom.trim().toLowerCase() === p.prenom.trim().toLowerCase());
-    if (dbl && !confirm("⚠️ " + dbl.nom + " " + dbl.prenom + " (" + (dbl.categorie || "?") + ") existe déjà dans les joueurs.\nCréer quand même un doublon ?")) return;
+    if (dbl && !confirm("Attention : " + dbl.nom + " " + dbl.prenom + " (" + (dbl.categorie || "?") + ") existe déjà dans les joueurs.\nCréer quand même un doublon ?")) return;
     // articles en « différé » : la remise réelle (et le décrément du stock) se fait sur la fiche
     const articles: PackArticle[] = (p.articles || []).map((a) => ({ article: a.article, taille: a.taille, statut: "differe" }));
     const joueur: Omit<Joueur, "id"> = {
@@ -34,13 +35,13 @@ export default function Preinscriptions() {
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
         .map((p) => (
           <div key={p.id} className="card">
-            <div style={{ fontSize: 16 }}><b>{p.nom}</b> {p.prenom} {p.gardien ? "🧤" : ""}</div>
+            <div style={{ fontSize: 16 }}><b>{p.nom}</b> {p.prenom} {p.gardien && <Icon name="shield" size={14} className="ico-svg" />}</div>
             <div className="muted" style={{ fontSize: 13, margin: "2px 0 8px" }}>
               {p.categorie || "—"} · né(e) {p.annee || "?"} · {p.tel || "sans tél."} · {(p.articles || []).length} article(s)
             </div>
             <div className="muted" style={{ fontSize: 12 }}>{(p.articles || []).map((a) => a.article + (a.taille ? " (" + a.taille + ")" : "")).join(", ")}</div>
             <div className="aa-foot" style={{ marginTop: 10 }}>
-              <button className="btn-primary" style={{ width: "auto", marginTop: 0, padding: "10px 16px", flex: 1 }} onClick={() => void valider(p)}>✓ Valider</button>
+              <button className="btn-primary icobtn" style={{ width: "auto", marginTop: 0, padding: "10px 16px", flex: 1 }} onClick={() => void valider(p)}><Icon name="check" size={16} className="ico-svg" /> Valider</button>
               <button className="lnk-danger" onClick={() => { if (confirm("Ignorer cette demande ?")) void deletePreinscription(p.id); }}>Supprimer</button>
             </div>
           </div>

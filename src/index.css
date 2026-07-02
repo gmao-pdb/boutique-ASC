@@ -1,22 +1,34 @@
 :root {
+  /* Vert + jaune (couleurs du club) + neutre chaud (greige) */
   --vert: #16a34a;
   --vert-fonce: #14532d;
   --vert-accent: #22c55e;
   --noir: #101613;
-  --rouge: #dc2626;
   --jaune: #eab308;
-  --bg: #eef1ec;
+  --jaune-fonce: #a16207;
+  /* le "danger" reste distinct mais s'accorde : un rouge terreux plutôt que vif */
+  --rouge: #b91c1c;
+  /* neutre chaud */
+  --bg: #f2f1ec;
   --card: #ffffff;
-  --bord: #e3e8e1;
-  --txt: #17211b;
-  --muted: #68786d;
-  --orange: #d97706;
-  --ombre: 0 1px 2px rgba(16, 24, 16, .05), 0 6px 20px -8px rgba(16, 24, 16, .12);
-  --ombre-haute: 0 4px 12px rgba(16, 24, 16, .08), 0 18px 40px -16px rgba(16, 24, 16, .22);
+  --bord: #e6e4dc;
+  --txt: #1e2420;
+  --muted: #6f7269;
+  --neutre: #8a8b80;
+  /* "en attente" adossé au jaune du club (remplace l'ancien orange) */
+  --orange: #a16207;
+  --ombre: 0 1px 2px rgba(24, 24, 16, .05), 0 6px 20px -8px rgba(24, 24, 16, .12);
+  --ombre-haute: 0 4px 12px rgba(24, 24, 16, .08), 0 18px 40px -16px rgba(24, 24, 16, .22);
   --radius: 16px;
   font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   color: var(--txt);
 }
+
+/* Icônes SVG : alignement dans les libellés / boutons */
+.ico-svg { flex: none; vertical-align: -.18em; }
+button .ico-svg, summary .ico-svg, .badge .ico-svg, .chip .ico-svg { margin-right: 2px; }
+.badge .ico-svg { vertical-align: -.15em; }
+.icobtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
@@ -52,7 +64,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   background: linear-gradient(160deg, #ffffff, #e8f5ec);
   color: var(--vert-fonce);
   display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;
-  box-shadow: inset 0 0 0 2px rgba(220, 38, 38, .85), 0 4px 10px rgba(0, 0, 0, .25);
+  box-shadow: inset 0 0 0 2px rgba(234, 179, 8, .9), 0 4px 10px rgba(0, 0, 0, .25);
   flex-shrink: 0;
 }
 .app-header h1 { font-size: 16px; margin: 0; font-weight: 800; letter-spacing: .2px; }
@@ -143,7 +155,7 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(150deg, #16a34a, #14532d);
   color: #fff; display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 21px; margin: 0 auto;
-  box-shadow: inset 0 0 0 3px rgba(220, 38, 38, .8), 0 12px 26px -10px rgba(20, 83, 45, .7);
+  box-shadow: inset 0 0 0 3px rgba(234, 179, 8, .85), 0 12px 26px -10px rgba(20, 83, 45, .7);
 }
 .login-err { margin-top: 12px; background: #fdecec; color: var(--rouge); border-radius: 12px; padding: 10px; font-size: 13px; font-weight: 600; }
 
@@ -307,6 +319,9 @@ input:focus, select:focus, textarea:focus {
 .late-b { color: var(--rouge); font-weight: 800; font-size: 11px; }
 
 /* Stock */
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: middle; background: var(--neutre); }
+.dot.rupture { background: var(--rouge); }
+.dot.bas { background: var(--jaune); }
 .stock-kpi { grid-template-columns: repeat(3, 1fr); }
 .stock-kpi .t-item b { font-size: 21px; }
 .stock-tools { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }

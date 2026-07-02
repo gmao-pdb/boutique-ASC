@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, NavLink, Outlet, Navigate } from "react-r
 import { AuthProvider, useAuth } from "./auth";
 import { useRole } from "./data";
 import type { Role } from "./types";
+import Icon from "./Icon";
 import Login from "./pages/Login";
 import Joueurs from "./pages/Joueurs";
 import FicheJoueur from "./pages/FicheJoueur";
@@ -29,10 +30,10 @@ function Layout({ role }: { role: Role }) {
       </main>
 
       <nav className="tabbar">
-        <NavLink to="/" end><span className="ico">📋</span>Joueurs</NavLink>
-        {role !== "user" && <NavLink to="/dashboard"><span className="ico">📊</span>Tableau</NavLink>}
-        <NavLink to="/stock"><span className="ico">📦</span>Stock</NavLink>
-        {role === "admin" && <NavLink to="/parametres"><span className="ico">⚙️</span>Réglages</NavLink>}
+        <NavLink to="/" end><Icon name="list" size={21} className="ico" />Joueurs</NavLink>
+        {role !== "user" && <NavLink to="/dashboard"><Icon name="chart" size={21} className="ico" />Tableau</NavLink>}
+        <NavLink to="/stock"><Icon name="box" size={21} className="ico" />Stock</NavLink>
+        {role === "admin" && <NavLink to="/parametres"><Icon name="gear" size={21} className="ico" />Réglages</NavLink>}
       </nav>
     </div>
   );

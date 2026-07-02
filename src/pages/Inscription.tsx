@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useConfig, addPreinscription } from "../data";
 import { autoCategorie, ageDe, packPour, tailleAuto } from "../calc";
+import Icon from "../Icon";
 
 export default function Inscription() {
   const cfg = useConfig();
@@ -46,7 +47,7 @@ export default function Inscription() {
       <div className="login-card">
         <div className="login-logo">ASC</div>
         <h1>Merci {prenom || nom} !</h1>
-        <p className="muted">Ta demande est bien enregistrée. Le règlement, la validation et la récupération du pack se feront directement à la boutique — on a déjà toutes tes infos. Merci de nous aider à préparer la saison ! 💛💚</p>
+        <p className="muted">Ta demande est bien enregistrée. Le règlement, la validation et la récupération du pack se feront directement à la boutique — on a déjà toutes tes infos. Merci de nous aider à préparer la saison ! <Icon name="heart" size={15} className="ico-svg" style={{ color: "var(--jaune)" }} /><Icon name="heart" size={15} className="ico-svg" style={{ color: "var(--vert)" }} /></p>
       </div>
     </div>
   );
@@ -68,7 +69,7 @@ export default function Inscription() {
         <input type="date" value={date} onChange={(e) => onDate(e.target.value)} />
         <label>Téléphone</label>
         <input type="tel" value={tel} onChange={(e) => setTel(e.target.value)} />
-        <label className="check"><input type="checkbox" checked={gardien} onChange={(e) => onGardien(e.target.checked)} /> 🧤 Je suis gardien(ne)</label>
+        <label className="check"><input type="checkbox" checked={gardien} onChange={(e) => onGardien(e.target.checked)} /> <Icon name="shield" size={15} className="ico-svg" /> Je suis gardien(ne)</label>
 
         {categorie && <div className="hint vert" style={{ marginTop: 10 }}>Catégorie : {categorie}{age != null ? " · " + age + " ans" : ""}</div>}
 

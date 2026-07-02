@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useConfig, useJoueurs, useStock, useCommandes } from "../data";
 import { calc, euro, chequeCount, besoinsCommande } from "../calc";
 import Cheques from "./Cheques";
+import Icon from "../Icon";
 import type { Joueur } from "../types";
 
 function csvDownload(name: string, rows: (string | number)[][]) {
@@ -56,10 +57,10 @@ export default function TableauBord() {
 
   return (
     <>
-      <h2 style={{ margin: "4px 0 12px" }}>📊 Tableau de bord</h2>
+      <h2 className="icobtn" style={{ margin: "4px 0 12px", justifyContent: "flex-start" }}><Icon name="chart" size={22} className="ico-svg" /> Tableau de bord</h2>
 
       <details className="param-tile" open>
-        <summary>💰 Finances</summary>
+        <summary><span className="icobtn"><Icon name="euro" size={18} className="ico-svg" /> Finances</span></summary>
         <div className="pt-body">
           <div className="totaux">
             <div className="t-item"><span>Total à payer</span><b>{euro(d.fin.total)}</b></div>
@@ -74,17 +75,17 @@ export default function TableauBord() {
               <span>encaissé <b>{euro(v.encaisse)}</b> · reste <b style={{ color: v.reste > 0 ? "var(--rouge)" : "inherit" }}>{euro(v.reste)}</b></span>
             </div>
           ))}
-          <button className="mini" style={{ marginTop: 12 }} onClick={exportFinances}>📊 Export finances (CSV)</button>
+          <button className="mini icobtn" style={{ marginTop: 12 }} onClick={exportFinances}><Icon name="chart" size={15} className="ico-svg" /> Export finances (CSV)</button>
         </div>
       </details>
 
       <details className="param-tile">
-        <summary>🧾 Chèques / dépôts</summary>
+        <summary><span className="icobtn"><Icon name="receipt" size={18} className="ico-svg" /> Chèques / dépôts</span></summary>
         <div className="pt-body"><Cheques /></div>
       </details>
 
       <details className="param-tile" open>
-        <summary>🎽 Équipements</summary>
+        <summary><span className="icobtn"><Icon name="shirt" size={18} className="ico-svg" /> Équipements</span></summary>
         <div className="pt-body">
           <div className="totaux stock-kpi">
             <div className="t-item paid"><span>Remis</span><b>{d.remis}</b></div>
@@ -96,12 +97,12 @@ export default function TableauBord() {
           <div className="dash-line"><span>Stock disponible (unités)</span><b>{d.stockDispo}</b></div>
 
           <h4 style={{ margin: "14px 0 4px", fontSize: 13, color: "var(--muted)" }}>JOUEURS AVEC PACK À PRÉPARER</h4>
-          {d.partiels.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Aucun. 👍</div>}
+          {d.partiels.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Aucun.</div>}
           {d.partiels.sort((a, b) => (a.nom || "").localeCompare(b.nom || "")).map((p) => {
             const df = (p.articles || []).filter((a) => a.statut !== "remis");
             return (
               <div className="manq" key={p.id} onClick={() => nav("/joueur/" + p.id)} style={{ cursor: "pointer" }}>
-                <div><b>{p.nom}</b> {p.prenom} <span className="muted">· {p.gardien ? "🧤 " : ""}{p.categorie}</span></div>
+                <div><b>{p.nom}</b> {p.prenom} <span className="muted">· {p.gardien && <Icon name="shield" size={12} className="ico-svg" />}{p.categorie}</span></div>
                 <div className="muted" style={{ fontSize: 12 }}>{df.map((a) => a.article + (a.taille ? " (" + a.taille + ")" : "")).join(", ")}</div>
               </div>
             );

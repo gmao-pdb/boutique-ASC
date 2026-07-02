@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useConfig, useJoueurs, updateJoueur } from "../data";
 import { calc, euro, chequeCount, chequeAmt } from "../calc";
+import Icon from "../Icon";
 import type { Cheque, Config, Joueur } from "../types";
 
 const todayIso = () => {
@@ -95,7 +96,7 @@ export default function Cheques() {
         <div className="t-item due"><span>En retard</span><b>{resume.retard}</b></div>
       </div>
 
-      <input className="search" type="search" placeholder="🔍 Joueur…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <input className="search" type="search" placeholder="Rechercher un joueur…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="chips">
         <button className={"chip" + (filtre === "arecuperer" ? " on" : "")} onClick={() => setFiltre("arecuperer")}>À récupérer</button>
         <button className={"chip" + (filtre === "aencaisser" ? " on" : "")} onClick={() => setFiltre("aencaisser")}>À encaisser</button>
@@ -105,8 +106,8 @@ export default function Cheques() {
       </div>
 
       {filtre === "amettre" && encaissables.length > 0 && (
-        <button className="mini" style={{ marginTop: 8 }} onClick={() => void encaisserAffiches()}>
-          🏦 Encaisser les {encaissables.length} chèque(s) arrivé(s) à échéance
+        <button className="mini icobtn" style={{ marginTop: 8 }} onClick={() => void encaisserAffiches()}>
+          <Icon name="bank" size={15} className="ico-svg" /> Encaisser les {encaissables.length} chèque(s) arrivé(s) à échéance
         </button>
       )}
 
@@ -118,8 +119,8 @@ export default function Cheques() {
         return (
           <div key={it.j.id + "-" + it.idx} className={"chq-card" + (it.enc ? " done" : "") + (late ? " late" : "")}>
             <div className="cc-top">
-              <b>{it.j.nom}</b> {it.j.prenom} <span className="muted">· {it.j.gardien ? "🧤 " : ""}{it.j.categorie} · Chèque {it.idx + 1}/{it.n}</span>
-              {it.ecart !== 0 && <span className="badge no" style={{ marginLeft: 6 }}>⚠️ écart {euro(it.ecart)}</span>}
+              <b>{it.j.nom}</b> {it.j.prenom} <span className="muted">· {it.j.gardien && <Icon name="shield" size={12} className="ico-svg" />}{it.j.categorie} · Chèque {it.idx + 1}/{it.n}</span>
+              {it.ecart !== 0 && <span className="badge no" style={{ marginLeft: 6 }}><Icon name="alert" size={12} className="ico-svg" /> écart {euro(it.ecart)}</span>}
             </div>
             <div className="cc-row">
               <span className="dt">Récup. <input type="date" value={it.dateRecup} onChange={(e) => patchCheque(it.j, it.idx, { dateRecup: e.target.value })} /></span>

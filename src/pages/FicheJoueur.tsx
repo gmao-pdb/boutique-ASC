@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, demanderSuppression, annulerSuppression, stockId, adjustStock } from "../data";
 import { useAuth } from "../auth";
+import Icon from "../Icon";
 import {
   calc, euro, autoCategorie, ageDe, packPour, tailleAuto, taillesEligibles,
   chequeCount, defaultChequeDates, splitAmount, chequeAmt,
@@ -166,7 +167,7 @@ export default function FicheJoueur({ role }: { role: Role }) {
       const dbl = joueurs.find((j) =>
         j.nom.trim().toLowerCase() === draft.nom.trim().toLowerCase() &&
         j.prenom.trim().toLowerCase() === draft.prenom.trim().toLowerCase());
-      if (dbl && !confirm("⚠️ " + dbl.nom + " " + dbl.prenom + " (" + (dbl.categorie || "?") + (dbl.annee ? ", né(e) " + dbl.annee : "") + ") existe déjà.\nCréer quand même un doublon ?")) return;
+      if (dbl && !confirm("Attention : " + dbl.nom + " " + dbl.prenom + " (" + (dbl.categorie || "?") + (dbl.annee ? ", né(e) " + dbl.annee : "") + ") existe déjà.\nCréer quand même un doublon ?")) return;
     }
     const payload: Partial<Joueur> = { ...draft, nom: draft.nom.trim(), prenom: draft.prenom.trim() };
     delete payload.id;
@@ -196,13 +197,13 @@ export default function FicheJoueur({ role }: { role: Role }) {
     <>
       <label>Date de naissance</label>
       <input type="date" value={draft.annee} onChange={(e) => onAnnee(e.target.value)} />
-      {age != null && <div className="hint vert">🎂 {age} ans → {draft.categorie}{draft.gardien ? " · 🧤 pack gardien" : ""}</div>}
+      {age != null && <div className="hint vert icobtn" style={{ justifyContent: "flex-start" }}><Icon name="cake" size={13} className="ico-svg" /> {age} ans → {draft.categorie}{draft.gardien ? " · pack gardien" : ""}</div>}
 
       <label>Catégorie</label>
       <select value={draft.categorie} onChange={(e) => onCategorie(e.target.value)}>
         {cfg.categories.map((c2) => <option key={c2} value={c2}>{c2}</option>)}
       </select>
-      <label className="check"><input type="checkbox" checked={draft.gardien} onChange={(e) => onGardien(e.target.checked)} /> 🧤 Gardien (pack spécial)</label>
+      <label className="check"><input type="checkbox" checked={draft.gardien} onChange={(e) => onGardien(e.target.checked)} /> <Icon name="shield" size={15} className="ico-svg" /> Gardien (pack spécial)</label>
 
       <label>Type de licence</label>
       <div className="chips lic-btns">
@@ -230,16 +231,16 @@ export default function FicheJoueur({ role }: { role: Role }) {
       <div className="row-btns">
         {isNew && <button className="mini" onClick={() => bumpAll(-1)}>▾ Tailles −</button>}
         {isNew && <button className="mini" onClick={() => bumpAll(1)}>▴ Tailles +</button>}
-        {dfCount > 0 && <button className="mini" onClick={() => tousStatut("remis")}>✅ Tout remis</button>}
+        {dfCount > 0 && <button className="mini icobtn" onClick={() => tousStatut("remis")}><Icon name="check" size={15} className="ico-svg" /> Tout remis</button>}
         {isNew && <button className="mini" onClick={rechargerPack}>↻ Recharger</button>}
         {!isNew && totalArts - dfCount > 0 && (
-          <button className="mini" onClick={() => setVoirTout(!voirTout)}>
-            {voirTout ? "Réduire aux différés" : "👁 Voir les " + (totalArts - dfCount) + " remis"}
+          <button className="mini icobtn" onClick={() => setVoirTout(!voirTout)}>
+            {voirTout ? "Réduire aux différés" : <><Icon name="eye" size={15} className="ico-svg" /> Voir les {totalArts - dfCount} remis</>}
           </button>
         )}
       </div>
       {!isNew && !voirTout && dfCount === 0 && totalArts > 0 && (
-        <div className="hint vert" style={{ marginTop: 8 }}>✅ Pack complet — tout a été remis.</div>
+        <div className="hint vert icobtn" style={{ marginTop: 8, justifyContent: "flex-start" }}><Icon name="check" size={14} className="ico-svg" /> Pack complet — tout a été remis.</div>
       )}
       {totalArts === 0 && <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>Aucun article. Renseigne la date de naissance (tuile Infos) pour générer le pack.</div>}
       {packRows.map(({ a, i }) => (
@@ -293,12 +294,12 @@ export default function FicheJoueur({ role }: { role: Role }) {
                 <span className="dt">Encaiss. prévu <input type="date" value={ch.datePrev} onChange={(e) => setCheque(i, { datePrev: e.target.value })} /></span>
                 <span className="mt"><input type="number" value={chequeAmt(ch, c.total, n)} onChange={(e) => setCheque(i, { montant: Math.max(0, Math.round(+e.target.value || 0)) })} /> €</span>
                 <button className="mini" onClick={() => equilibrer(i)}>=</button>
-                {ch.enc ? <span className="badge ok">✅ encaissé</span> : <span className="badge neutre">non encaissé</span>}
+                {ch.enc ? <span className="badge ok"><Icon name="check" size={12} className="ico-svg" /> encaissé</span> : <span className="badge neutre">non encaissé</span>}
               </div>
             </div>
           ))}
-          <div className={"somme " + (sommeCheques === c.total ? "ok" : "ko")}>
-            Somme chèques : {euro(sommeCheques)} / {euro(c.total)} {sommeCheques === c.total ? "✅" : "⚠️ écart " + euro(c.total - sommeCheques)}
+          <div className={"somme icobtn " + (sommeCheques === c.total ? "ok" : "ko")} style={{ justifyContent: "flex-start" }}>
+            Somme chèques : {euro(sommeCheques)} / {euro(c.total)} {sommeCheques === c.total ? <Icon name="check" size={14} className="ico-svg" /> : <><Icon name="alert" size={14} className="ico-svg" /> écart {euro(c.total - sommeCheques)}</>}
           </div>
         </div>
       )}
@@ -321,11 +322,11 @@ export default function FicheJoueur({ role }: { role: Role }) {
       {!isNew && (
         draft.supprDemandee ? (
           <>
-            {role !== "user" && <button className="btn-danger" onClick={() => void supprimerDirect()}>🗑️ Effacer définitivement</button>}
-            <button className="btn-danger" style={{ borderColor: "var(--bord)", color: "var(--txt)" }} onClick={() => void annuler()}>↩️ Annuler la demande de suppression</button>
+            {role !== "user" && <button className="btn-danger icobtn" onClick={() => void supprimerDirect()}><Icon name="trash" size={16} className="ico-svg" /> Effacer définitivement</button>}
+            <button className="btn-danger icobtn" style={{ borderColor: "var(--bord)", color: "var(--txt)" }} onClick={() => void annuler()}><Icon name="undo" size={16} className="ico-svg" /> Annuler la demande de suppression</button>
           </>
         ) : role === "user" ? (
-          <button className="btn-danger" onClick={() => void demander()}>🗑️ Demander la suppression</button>
+          <button className="btn-danger icobtn" onClick={() => void demander()}><Icon name="trash" size={16} className="ico-svg" /> Demander la suppression</button>
         ) : (
           <button className="btn-danger" onClick={() => void supprimerDirect()}>Supprimer ce joueur</button>
         )
@@ -352,10 +353,10 @@ export default function FicheJoueur({ role }: { role: Role }) {
 
   /* ---- fiche existante : en-tête + tuiles fermées ---- */
   const badgePack = dfCount > 0
-    ? <span className="badge part">⏳ {dfCount} à préparer</span>
-    : totalArts > 0 ? <span className="badge ok">✅ complet</span> : <span className="badge neutre">vide</span>;
+    ? <span className="badge part"><Icon name="clock" size={12} className="ico-svg" /> {dfCount} à préparer</span>
+    : totalArts > 0 ? <span className="badge ok"><Icon name="check" size={12} className="ico-svg" /> complet</span> : <span className="badge neutre">vide</span>;
   const badgeReg = (!draft.licence || !draft.reglement)
-    ? <span className="badge no">⚠️ à compléter</span>
+    ? <span className="badge no"><Icon name="alert" size={12} className="ico-svg" /> à compléter</span>
     : c.reste <= 0 ? <span className="badge ok">soldé</span> : <span className="badge no">{euro(c.reste)} dû</span>;
 
   return (
@@ -363,21 +364,21 @@ export default function FicheJoueur({ role }: { role: Role }) {
       <div className="fiche-head">
         <button className="lnk" onClick={() => nav(-1)}>← Retour</button>
         <div className="fh-nom">{draft.nom} <span>{draft.prenom}</span></div>
-        <div className="fh-cat">{draft.gardien ? "🧤 " : ""}{draft.categorie}{age != null ? " · " + age + " ans" : ""}{draft.licence ? " · " + draft.licence : ""}</div>
+        <div className="fh-cat icobtn" style={{ justifyContent: "flex-start" }}>{draft.gardien && <Icon name="shield" size={12} className="ico-svg" />}{draft.categorie}{age != null ? " · " + age + " ans" : ""}{draft.licence ? " · " + draft.licence : ""}</div>
       </div>
 
       <details className="param-tile">
-        <summary><span>👤 Infos joueur</span></summary>
+        <summary><span className="icobtn"><Icon name="user" size={17} className="ico-svg" /> Infos joueur</span></summary>
         <div className="pt-body">{secInfos}</div>
       </details>
 
       <details className="param-tile">
-        <summary><span>🎽 Pack à remettre</span><span className="pt-badges">{badgePack}</span></summary>
+        <summary><span className="icobtn"><Icon name="shirt" size={17} className="ico-svg" /> Pack à remettre</span><span className="pt-badges">{badgePack}</span></summary>
         <div className="pt-body">{secPack}</div>
       </details>
 
       <details className="param-tile">
-        <summary><span>💶 Règlement</span><span className="pt-badges">{badgeReg}</span></summary>
+        <summary><span className="icobtn"><Icon name="euro" size={17} className="ico-svg" /> Règlement</span><span className="pt-badges">{badgeReg}</span></summary>
         <div className="pt-body">{secReglement}</div>
       </details>
 

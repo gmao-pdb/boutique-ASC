@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useConfig, patchConfig, useRoles, setUserRole, removeUserRole, creerCompte, exportBase, importBase, nouvelleSaison } from "../data";
 import { calc } from "../calc";
+import Icon from "../Icon";
 import type { Config, Role, Joueur } from "../types";
 
 function download(name: string, content: string, type: string) {
@@ -45,7 +46,7 @@ export default function Parametres() {
   const resetSaison = async () => {
     const s = saisonSuivante.trim();
     if (!s) { alert("Indique le nom de la nouvelle saison (ex. 2026-2027)."); return; }
-    if (prompt("⚠️ IRRÉVERSIBLE : efface tous les joueurs, chèques, commandes.\nUne sauvegarde JSON sera téléchargée automatiquement avant.\n\nTape NOUVELLE SAISON pour confirmer :") !== "NOUVELLE SAISON") return;
+    if (prompt("IRRÉVERSIBLE : efface tous les joueurs, chèques, commandes.\nUne sauvegarde JSON sera téléchargée automatiquement avant.\n\nTape NOUVELLE SAISON pour confirmer :") !== "NOUVELLE SAISON") return;
     // filet de sécurité : on télécharge la sauvegarde complète AVANT d'effacer
     setBusy("Sauvegarde…");
     const d = await exportBase();
@@ -120,7 +121,7 @@ export default function Parametres() {
   return (
     <div className="params-tiles">
       <details className="param-tile" open>
-        <summary>🗓️ Saison & tarifs</summary>
+        <summary><span className="icobtn"><Icon name="calendar" size={17} className="ico-svg" /> Saison & tarifs</span></summary>
         <div className="pt-body">
           <label>Saison</label>
           <input value={draft.saison} onChange={(e) => upd({ saison: e.target.value })} />
@@ -130,12 +131,12 @@ export default function Parametres() {
           </div>
           <label>LICENCE seule (€)</label>
           <input type="number" value={draft.tarifs.LICENCE} onChange={(e) => upd({ tarifs: { ...draft.tarifs, LICENCE: +e.target.value } })} />
-          <label className="check"><input type="checkbox" checked={draft.sacSiNouvelle} onChange={(e) => upd({ sacSiNouvelle: e.target.checked })} /> 🎒 Sac pour les nouvelles licences</label>
+          <label className="check"><input type="checkbox" checked={draft.sacSiNouvelle} onChange={(e) => upd({ sacSiNouvelle: e.target.checked })} /> <Icon name="bag" size={15} className="ico-svg" /> Sac pour les nouvelles licences</label>
         </div>
       </details>
 
       <details className="param-tile">
-        <summary>🏷️ Remises</summary>
+        <summary><span className="icobtn"><Icon name="tag" size={17} className="ico-svg" /> Remises</span></summary>
         <div className="pt-body">
           {draft.remises.map((r, i) => (
             <div className="editrow" key={i}>
@@ -150,7 +151,7 @@ export default function Parametres() {
       </details>
 
       <details className="param-tile">
-        <summary>🎽 Composition des packs</summary>
+        <summary><span className="icobtn"><Icon name="shirt" size={17} className="ico-svg" /> Composition des packs</span></summary>
         <div className="pt-body">
           <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Choisis une catégorie, coche les articles du pack joueur / gardien. (Articles & tailles → onglet Stock.)</p>
           <select value={cat} onChange={(e) => setPackCat(e.target.value)}>
@@ -172,7 +173,7 @@ export default function Parametres() {
       </details>
 
       <details className="param-tile">
-        <summary>📂 Catégories</summary>
+        <summary><span className="icobtn"><Icon name="folder" size={17} className="ico-svg" /> Catégories</span></summary>
         <div className="pt-body">
           {draft.categories.map((c, i) => (
             <div className="editrow" key={i}>
@@ -185,7 +186,7 @@ export default function Parametres() {
       </details>
 
       <details className="param-tile">
-        <summary>💳 Modes de règlement</summary>
+        <summary><span className="icobtn"><Icon name="card" size={17} className="ico-svg" /> Modes de règlement</span></summary>
         <div className="pt-body">
           {draft.reglements.map((c, i) => (
             <div className="editrow" key={i}>
@@ -197,10 +198,10 @@ export default function Parametres() {
         </div>
       </details>
 
-      <button className="btn-primary" onClick={() => void enregistrer()}>💾 Enregistrer les paramètres</button>
+      <button className="btn-primary icobtn" onClick={() => void enregistrer()}><Icon name="save" size={17} className="ico-svg" /> Enregistrer les paramètres</button>
 
       <details className="param-tile">
-        <summary>👥 Utilisateurs & droits</summary>
+        <summary><span className="icobtn"><Icon name="users" size={17} className="ico-svg" /> Utilisateurs & droits</span></summary>
         <div className="pt-body">
           <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Donne un rôle à chaque e-mail (le compte doit exister dans Firebase → Authentication). Appliqué tout de suite.</p>
           {roles && roles.map((r) => (
@@ -228,12 +229,12 @@ export default function Parametres() {
       </details>
 
       <details className="param-tile">
-        <summary>🗓️ Sauvegarde & fin de saison</summary>
+        <summary><span className="icobtn"><Icon name="save" size={17} className="ico-svg" /> Sauvegarde & fin de saison</span></summary>
         <div className="pt-body">
           <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Exporte une sauvegarde complète, puis (nouvelle saison) repars propre en gardant tout ton paramétrage.</p>
           {busy && <div className="hint vert">{busy}</div>}
-          <button className="btn-primary" onClick={() => void exporterJSON()}>💾 Exporter la base (sauvegarde .json)</button>
-          <button className="mini" style={{ marginTop: 8 }} onClick={() => void exporterCSV()}>📊 Exporter les joueurs (Excel/CSV)</button>
+          <button className="btn-primary icobtn" onClick={() => void exporterJSON()}><Icon name="save" size={17} className="ico-svg" /> Exporter la base (sauvegarde .json)</button>
+          <button className="mini icobtn" style={{ marginTop: 8 }} onClick={() => void exporterCSV()}><Icon name="chart" size={15} className="ico-svg" /> Exporter les joueurs (Excel/CSV)</button>
 
           <h3 className="sec" style={{ marginTop: 18 }}>Restaurer</h3>
           <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Recharge une sauvegarde .json (les données du fichier reprennent leur place).</p>
@@ -243,7 +244,7 @@ export default function Parametres() {
           <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Efface les joueurs, chèques et commandes. Garde tarifs, catégories, packs, catalogue et stock. <b>Exporte d'abord !</b></p>
           <label>Nom de la nouvelle saison</label>
           <input placeholder="ex. 2026-2027" value={saisonSuivante} onChange={(e) => setSaisonSuivante(e.target.value)} />
-          <button className="btn-danger" style={{ marginTop: 10 }} onClick={() => void resetSaison()}>🗓️ Démarrer la nouvelle saison</button>
+          <button className="btn-danger icobtn" style={{ marginTop: 10 }} onClick={() => void resetSaison()}><Icon name="calendar" size={16} className="ico-svg" /> Démarrer la nouvelle saison</button>
         </div>
       </details>
 

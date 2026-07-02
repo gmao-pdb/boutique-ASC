@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useConfig, useJoueurs, useStock, useCommandes, setStockItem, enregistrerInventaire, useInventaires, deleteInventaire, stockId, patchConfig, addCommande, updateCommande, deleteCommande, adjustStock } from "../data";
 import { besoinsCommande } from "../calc";
+import Icon from "../Icon";
 import { COMMANDE_LABEL, type CatalogueItem, type Commande, type CommandeLigne, type StockItem } from "../types";
 
 const todayIso = () => { const z = (x: number) => String(x).padStart(2, "0"); const d = new Date(); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
@@ -105,15 +106,15 @@ export default function Stock() {
   return (
     <>
       <div className="chips">
-        <button className={"chip" + (vue === "articles" ? " on" : "")} onClick={() => setVue("articles")}>📦 Articles & stock</button>
-        <button className={"chip" + (vue === "commandes" ? " on" : "")} onClick={() => setVue("commandes")}>🛒 Commandes</button>
-        <button className={"chip" + (vue === "manquants" ? " on" : "")} onClick={() => setVue("manquants")}>📋 Manquants</button>
+        <button className={"chip icobtn" + (vue === "articles" ? " on" : "")} onClick={() => setVue("articles")}><Icon name="box" size={15} className="ico-svg" /> Articles & stock</button>
+        <button className={"chip icobtn" + (vue === "commandes" ? " on" : "")} onClick={() => setVue("commandes")}><Icon name="cart" size={15} className="ico-svg" /> Commandes</button>
+        <button className={"chip icobtn" + (vue === "manquants" ? " on" : "")} onClick={() => setVue("manquants")}><Icon name="list" size={15} className="ico-svg" /> Manquants</button>
       </div>
 
       {vue === "commandes" && (
         <>
           <h3 className="sec">À commander ({suggestions.length})</h3>
-          {suggestions.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à commander : aucun article différé chez les joueurs, stock et commandes en cours couvrent tout. 👍</div>}
+          {suggestions.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à commander : aucun article différé chez les joueurs, stock et commandes en cours couvrent tout.</div>}
           {suggestions.map((s) => (
             <div className="manq" key={s.key}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
@@ -145,8 +146,8 @@ export default function Stock() {
               <div style={{ fontSize: 13, margin: "6px 0" }}>{c.lignes.map((l) => l.quantite + "× " + l.article + " (" + l.taille + ")").join(" · ")}</div>
               {(c.dateCommande || c.dateReception) && <div className="muted" style={{ fontSize: 11 }}>{c.dateCommande ? "commandée le " + c.dateCommande : ""}{c.dateReception ? " · reçue le " + c.dateReception : ""}</div>}
               <div className="aa-foot" style={{ marginTop: 8 }}>
-                {c.statut === "apasser" && <button className="mini" onClick={() => marquerCommandee(c)}>🚚 Marquer commandée</button>}
-                {c.statut === "encours" && <button className="btn-primary" style={{ width: "auto", marginTop: 0, padding: "9px 14px", flex: 1 }} onClick={() => void receptionner(c)}>✅ Valider réception (+ stock)</button>}
+                {c.statut === "apasser" && <button className="mini icobtn" onClick={() => marquerCommandee(c)}><Icon name="truck" size={15} className="ico-svg" /> Marquer commandée</button>}
+                {c.statut === "encours" && <button className="btn-primary icobtn" style={{ width: "auto", marginTop: 0, padding: "9px 14px", flex: 1 }} onClick={() => void receptionner(c)}><Icon name="check" size={16} className="ico-svg" /> Valider réception (+ stock)</button>}
                 <button className="lnk-danger" onClick={() => { if (confirm("Supprimer cette commande ?")) void deleteCommande(c.id); }}>Supprimer</button>
               </div>
             </div>
@@ -157,16 +158,16 @@ export default function Stock() {
       {vue === "manquants" && (
         <>
           <h3 className="sec">À fournir / différés ({manquants.reduce((s, e) => s + e.qte, 0)})</h3>
-          {manquants.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à fournir. 👍</div>}
+          {manquants.length === 0 && <div className="muted" style={{ fontSize: 13 }}>Rien à fournir.</div>}
           {manquants.map((e) => {
             const cmd = enCommande.get(key2(e.article, e.taille)) || 0;
             const dispo = stockMap.get(stockId(e.article, e.taille))?.quantite ?? 0;
             return (
               <div key={e.article + e.taille} className="manq">
                 <div><b>{e.qte}×</b> {e.article} <span className="muted">({e.taille})</span>
-                  {dispo >= e.qte ? <span className="badge ok" style={{ marginLeft: 6 }}>✅ en stock, à remettre</span>
-                    : dispo > 0 ? <span className="badge ok" style={{ marginLeft: 6 }}>✅ {dispo} en stock</span> : null}
-                  {dispo < e.qte && (cmd > 0 ? <span className="badge part" style={{ marginLeft: 6 }}>🚚 {cmd} commandé(s)</span> : <span className="badge no" style={{ marginLeft: 6 }}>à commander</span>)}
+                  {dispo >= e.qte ? <span className="badge ok" style={{ marginLeft: 6 }}><Icon name="check" size={12} className="ico-svg" /> en stock, à remettre</span>
+                    : dispo > 0 ? <span className="badge ok" style={{ marginLeft: 6 }}><Icon name="check" size={12} className="ico-svg" /> {dispo} en stock</span> : null}
+                  {dispo < e.qte && (cmd > 0 ? <span className="badge part" style={{ marginLeft: 6 }}><Icon name="truck" size={12} className="ico-svg" /> {cmd} commandé(s)</span> : <span className="badge no" style={{ marginLeft: 6 }}>à commander</span>)}
                 </div>
                 <div className="muted" style={{ fontSize: 12 }}>{e.qui.join(", ")}</div>
               </div>
@@ -192,8 +193,8 @@ export default function Stock() {
             </div>
 
             <div className="stock-tools">
-              <input className="search" type="search" placeholder="🔍 Article…" value={artQ} onChange={(e) => setArtQ(e.target.value)} />
-              <button className="mini" onClick={() => void faireInventaire()}>🗒️ Inventaire</button>
+              <input className="search" type="search" placeholder="Rechercher un article…" value={artQ} onChange={(e) => setArtQ(e.target.value)} />
+              <button className="mini icobtn" onClick={() => void faireInventaire()}><Icon name="list" size={15} className="ico-svg" /> Inventaire</button>
             </div>
             <label className="check" style={{ marginBottom: 6 }}><input type="checkbox" checked={alertesSeules} onChange={(e) => setAlertesSeules(e.target.checked)} /> Seulement les alertes</label>
 
@@ -205,12 +206,12 @@ export default function Stock() {
               });
               const shown = alertesSeules ? rows.filter((r) => r.rupture || r.bas) : rows;
               if (alertesSeules && shown.length === 0) return null;
-              const dot = rows.some((r) => r.rupture) ? "🔴" : rows.some((r) => r.bas) ? "🟠" : "";
+              const dotCls = rows.some((r) => r.rupture) ? "rupture" : rows.some((r) => r.bas) ? "bas" : "";
               return (
                 <details key={art.nom} className="art-acc">
                   <summary>
                     <span className="aa-name">{art.nom}</span>
-                    <span className="aa-meta">{dot} {art.tailles.length} taille{art.tailles.length > 1 ? "s" : ""}</span>
+                    <span className="aa-meta">{dotCls && <span className={"dot " + dotCls} />} {art.tailles.length} taille{art.tailles.length > 1 ? "s" : ""}</span>
                   </summary>
                   <div className="aa-body">
                     <label className="check" style={{ marginTop: 0, marginBottom: 8 }}>
@@ -260,7 +261,7 @@ export default function Stock() {
                 {[...(inventaires || [])].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((inv) => (
                   <details key={inv.id} className="art-acc">
                     <summary>
-                      <span className="aa-name">🗒️ {new Date(inv.date).toLocaleDateString("fr-FR")} <span className="muted">{new Date(inv.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span></span>
+                      <span className="aa-name icobtn"><Icon name="list" size={15} className="ico-svg" /> {new Date(inv.date).toLocaleDateString("fr-FR")} <span className="muted">{new Date(inv.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span></span>
                       <span className="aa-meta">{inv.lignes.length} réf. · {inv.lignes.reduce((s, l) => s + l.quantite, 0)} unités</span>
                     </summary>
                     <div className="aa-body">

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, demanderSuppression, annulerSuppression, stockId, adjustStock } from "../data";
 import { useAuth } from "../auth";
 import {
@@ -34,8 +34,11 @@ export default function FicheJoueur({ role }: { role: Role }) {
   const stock = useStock();
   const email = useAuth().user?.email || "";
   const nav = useNavigate();
+  const loc = useLocation();
   const { id } = useParams();
   const isNew = id === "new";
+  // arrivée depuis la validation d'une pré-inscription : ouvrir comme une création
+  const deplie = isNew || !!(loc.state as { deplie?: boolean } | null)?.deplie;
 
   const existing = !isNew && joueurs ? joueurs.find((j) => j.id === id) : null;
   const [draft, setDraft] = useState<Joueur | null>(null);
@@ -330,13 +333,13 @@ export default function FicheJoueur({ role }: { role: Role }) {
     </>
   );
 
-  /* ---- création : formulaire complet ouvert ---- */
-  if (isNew) {
+  /* ---- création (ou validation pré-inscription) : formulaire complet ouvert ---- */
+  if (deplie) {
     return (
       <div className="fiche">
         <div className="fiche-top">
           <button className="lnk" onClick={() => nav(-1)}>← Retour</button>
-          <b>Nouveau joueur</b>
+          <b>{isNew ? "Nouveau joueur" : draft.nom + " " + draft.prenom}</b>
         </div>
         {secInfos}
         <h3 className="sec">Pack à remettre</h3>

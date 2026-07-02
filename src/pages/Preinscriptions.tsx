@@ -22,7 +22,7 @@ export default function Preinscriptions() {
     };
     const ref = await addJoueur(joueur);
     await deletePreinscription(p.id);
-    nav("/joueur/" + ref.id);
+    nav("/joueur/" + ref.id, { state: { deplie: true } });
   };
 
   return (

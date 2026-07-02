@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useConfig, useJoueurs, useStock, addJoueur, updateJoueur, deleteJoueur, demanderSuppression, annulerSuppression, stockId, adjustStock } from "../data";
 import { useAuth } from "../auth";
@@ -41,12 +41,16 @@ export default function FicheJoueur({ role }: { role: Role }) {
   const [draft, setDraft] = useState<Joueur | null>(null);
   const [voirTout, setVoirTout] = useState(false);
 
-  // initialise le brouillon une fois config + joueur chargés
+  useEffect(() => {
+    if (!cfg) return;
+    if (isNew) {
+      setDraft(blankJoueur(cfg));
+    } else if (existing) {
+      setDraft(JSON.parse(JSON.stringify(existing)));
+    }
+  }, [cfg, isNew, existing]);
+
   const ready = !!cfg && (isNew || !!existing);
-  if (cfg && draft === null) {
-    if (isNew) setDraft(blankJoueur(cfg));
-    else if (existing) setDraft(JSON.parse(JSON.stringify(existing)));
-  }
 
   const age = useMemo(() => {
     if (!cfg || !draft) return null;

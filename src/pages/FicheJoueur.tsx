@@ -40,7 +40,6 @@ export default function FicheJoueur({ role }: { role: Role }) {
   const existing = !isNew && joueurs ? joueurs.find((j) => j.id === id) : null;
   const [draft, setDraft] = useState<Joueur | null>(null);
   const [voirTout, setVoirTout] = useState(false);
-  const [filtreChq, setFiltreChq] = useState<"tous" | "aencaisser" | "amettreaencaissement">("tous");
 
   useEffect(() => {
     if (!cfg) return;
@@ -283,43 +282,21 @@ export default function FicheJoueur({ role }: { role: Role }) {
 
       {n > 0 && (
         <div className="paybox">
-          <div className="chips">
-            <button className={"chip" + (filtreChq === "tous" ? " on" : "")} onClick={() => setFiltreChq("tous")}>Tous</button>
-            <button className={"chip" + (filtreChq === "aencaisser" ? " on" : "")} onClick={() => setFiltreChq("aencaisser")}>À encaisser</button>
-            <button className={"chip" + (filtreChq === "amettreaencaissement" ? " on" : "")} onClick={() => setFiltreChq("amettreaencaissement")}>À mettre à encaissement</button>
+          {draft.cheques.map((ch, i) => (
+            <div key={i} className="chq">
+              <label className="check"><input type="checkbox" checked={ch.recup} onChange={(e) => setCheque(i, { recup: e.target.checked, dateRecup: e.target.checked && !ch.dateRecup ? todayIso() : ch.dateRecup })} /> Chèque {i + 1} récupéré</label>
+              <div className="chq-l2">
+                <span className="dt">Récup. <input type="date" value={ch.dateRecup || ""} onChange={(e) => setCheque(i, { dateRecup: e.target.value })} /></span>
+                <span className="dt">Encaiss. prévu <input type="date" value={ch.datePrev} onChange={(e) => setCheque(i, { datePrev: e.target.value })} /></span>
+                <span className="mt"><input type="number" value={chequeAmt(ch, c.total, n)} onChange={(e) => setCheque(i, { montant: Math.max(0, Math.round(+e.target.value || 0)) })} /> €</span>
+                <button className="mini" onClick={() => equilibrer(i)}>=</button>
+                {ch.enc ? <span className="badge ok">✅ encaissé</span> : <span className="badge neutre">non encaissé</span>}
+              </div>
+            </div>
+          ))}
+          <div className={"somme " + (sommeCheques === c.total ? "ok" : "ko")}>
+            Somme chèques : {euro(sommeCheques)} / {euro(c.total)} {sommeCheques === c.total ? "✅" : "⚠️ écart " + euro(c.total - sommeCheques)}
           </div>
-          {(() => {
-            const auj = todayIso();
-            const aEncaisser = draft.cheques.map((ch, i) => ({ ch, i })).filter(({ ch }) => ch.recup && !ch.enc);
-            const aMettre = aEncaisser.filter(({ ch }) => ch.datePrev <= auj);
-            const afficher = filtreChq === "tous" ? draft.cheques.map((ch, i) => ({ ch, i }))
-              : filtreChq === "aencaisser" ? aEncaisser
-              : aMettre;
-            return (
-              <>
-                {afficher.map(({ ch, i }) => (
-                  <div key={i} className="chq">
-                    <label className="check"><input type="checkbox" checked={ch.recup} onChange={(e) => setCheque(i, { recup: e.target.checked, dateRecup: e.target.checked && !ch.dateRecup ? todayIso() : ch.dateRecup })} /> Chèque {i + 1} récupéré</label>
-                    <div className="chq-l2">
-                      <span className="dt">Récup. <input type="date" value={ch.dateRecup || ""} onChange={(e) => setCheque(i, { dateRecup: e.target.value })} /></span>
-                      <span className="dt">Encaiss. prévu <input type="date" value={ch.datePrev} onChange={(e) => setCheque(i, { datePrev: e.target.value })} /></span>
-                      <span className="mt"><input type="number" value={chequeAmt(ch, c.total, n)} onChange={(e) => setCheque(i, { montant: Math.max(0, Math.round(+e.target.value || 0)) })} /> €</span>
-                      <button className="mini" onClick={() => equilibrer(i)}>=</button>
-                      {ch.enc ? <span className="badge ok">✅ encaissé</span> : <span className="badge neutre">non encaissé</span>}
-                    </div>
-                  </div>
-                ))}
-                {filtreChq === "amettreaencaissement" && aMettre.length > 0 && (
-                  <button className="btn-primary" onClick={() => {
-                    aMettre.forEach(({ i }) => setCheque(i, { enc: true }));
-                  }}>✅ Encaisser les {aMettre.length} chèque(s)</button>
-                )}
-                <div className={"somme " + (sommeCheques === c.total ? "ok" : "ko")}>
-                  Somme chèques : {euro(sommeCheques)} / {euro(c.total)} {sommeCheques === c.total ? "✅" : "⚠️ écart " + euro(c.total - sommeCheques)}
-                </div>
-              </>
-            );
-          })()}
         </div>
       )}
       {n === 0 && draft.reglement && draft.reglement !== "NON RÉGLÉ" && (

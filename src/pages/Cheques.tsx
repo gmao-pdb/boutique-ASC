@@ -18,7 +18,7 @@ export default function Cheques() {
   const cfg = useConfig();
   const joueurs = useJoueurs();
   const [q, setQ] = useState("");
-  const [filtre, setFiltre] = useState<"arecuperer" | "aencaisser" | "" | "encaisse">("aencaisser");
+  const [filtre, setFiltre] = useState<"arecuperer" | "aencaisser" | "amettre" | "" | "encaisse">("aencaisser");
 
   const today = todayIso();
 
@@ -60,7 +60,8 @@ export default function Cheques() {
     const filtered = out
       .filter((it) => {
         if (filtre === "arecuperer" && it.recup) return false;
-        if (filtre === "aencaisser" && it.enc) return false;
+        if (filtre === "aencaisser" && (it.enc || !it.recup)) return false;
+        if (filtre === "amettre" && (it.enc || !it.recup || !(it.datePrev && it.datePrev <= today))) return false;
         if (filtre === "encaisse" && !it.enc) return false;
         if (ql && !(it.j.nom + " " + it.j.prenom).toLowerCase().includes(ql)) return false;
         return true;
@@ -98,13 +99,14 @@ export default function Cheques() {
       <div className="chips">
         <button className={"chip" + (filtre === "arecuperer" ? " on" : "")} onClick={() => setFiltre("arecuperer")}>À récupérer</button>
         <button className={"chip" + (filtre === "aencaisser" ? " on" : "")} onClick={() => setFiltre("aencaisser")}>À encaisser</button>
+        <button className={"chip" + (filtre === "amettre" ? " on" : "")} onClick={() => setFiltre("amettre")}>À mettre à encaissement</button>
         <button className={"chip" + (filtre === "" ? " on" : "")} onClick={() => setFiltre("")}>Tous</button>
         <button className={"chip" + (filtre === "encaisse" ? " on" : "")} onClick={() => setFiltre("encaisse")}>Encaissés</button>
       </div>
 
-      {filtre === "aencaisser" && encaissables.length > 1 && (
+      {filtre === "amettre" && encaissables.length > 0 && (
         <button className="mini" style={{ marginTop: 8 }} onClick={() => void encaisserAffiches()}>
-          🏦 Encaisser les {encaissables.length} chèques récupérés affichés
+          🏦 Encaisser les {encaissables.length} chèque(s) arrivé(s) à échéance
         </button>
       )}
 
